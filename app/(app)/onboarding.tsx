@@ -6,6 +6,7 @@ import { supabase } from '../../src/lib/supabase';
 export default function OnboardingScreen() {
   const [weight, setWeight] = useState('');
   const [calories, setCalories] = useState('2000');
+  const [activityTarget, setActivityTarget] = useState('5');
 
   async function handleSave() {
     const weightNum = parseFloat(weight);
@@ -20,7 +21,11 @@ export default function OnboardingScreen() {
 
     const { error } = await supabase
       .from('profiles')
-      .update({ desired_weight_lbs: weightNum, calorie_target: calorieNum })
+      .update({
+        desired_weight_lbs: weightNum,
+        calorie_target: calorieNum,
+        activity_target: parseFloat(activityTarget) || 5,
+      })
       .eq('id', user.id);
 
     if (error) {
@@ -55,6 +60,16 @@ export default function OnboardingScreen() {
         placeholder="e.g. 2000"
         value={calories}
         onChangeText={setCalories}
+        keyboardType="numeric"
+      />
+
+      <Text style={styles.label}>Daily effort target (1-10)</Text>
+      <Text style={styles.hint}>5 = move most days. 8 = serious training.</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="e.g. 5"
+        value={activityTarget}
+        onChangeText={setActivityTarget}
         keyboardType="numeric"
       />
 

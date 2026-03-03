@@ -27,11 +27,13 @@ export default function SettingsScreen() {
   const { settings, updateSetting } = useNotificationSettings();
   const [weight, setWeight] = useState('');
   const [calories, setCalories] = useState('');
+  const [activityTarget, setActivityTarget] = useState('5');
 
   useEffect(() => {
     if (profile) {
       setWeight(String(profile.desired_weight_lbs));
       setCalories(String(profile.calorie_target));
+      setActivityTarget(String(profile.activity_target));
     }
   }, [profile]);
 
@@ -44,6 +46,7 @@ export default function SettingsScreen() {
       .update({
         desired_weight_lbs: parseFloat(weight),
         calorie_target: parseFloat(calories),
+        activity_target: parseFloat(activityTarget) || 5,
       })
       .eq('id', user.id);
 
@@ -82,6 +85,15 @@ export default function SettingsScreen() {
           style={styles.input}
           value={calories}
           onChangeText={setCalories}
+          keyboardType="numeric"
+        />
+
+        <Text style={styles.label}>Daily effort target (1-10)</Text>
+        <Text style={styles.hint}>5 = move most days. 8 = serious training.</Text>
+        <TextInput
+          style={styles.input}
+          value={activityTarget}
+          onChangeText={setActivityTarget}
           keyboardType="numeric"
         />
 

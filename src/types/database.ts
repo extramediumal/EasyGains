@@ -1,4 +1,5 @@
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+export type WorkoutType = 'strength' | 'cardio' | 'flexibility' | 'sports' | 'other';
 export type TriggerType = 'meal_prompt' | 'no_log_reminder' | 'encouragement' | 'weekly_summary';
 export type ToneType = 'funny' | 'motivational' | 'chill' | 'sarcastic';
 
@@ -6,6 +7,7 @@ export interface Profile {
   id: string;
   desired_weight_lbs: number;
   calorie_target: number;
+  activity_target: number;
   created_at: string;
   updated_at: string;
 }
@@ -33,6 +35,29 @@ export interface MealItem {
   protein: number;
   carbs: number;
   fat: number;
+}
+
+export interface Workout {
+  id: string;
+  user_id: string;
+  logged_at: string;
+  workout_type: WorkoutType;
+  raw_input: string | null;
+  total_effort_score: number;
+  total_duration_min: number;
+  total_calories_burned: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WorkoutExercise {
+  id: string;
+  workout_id: string;
+  name: string;
+  detail: string;
+  duration_min: number;
+  calories_burned: number;
+  effort_score: number;
 }
 
 export interface NotificationSetting {
