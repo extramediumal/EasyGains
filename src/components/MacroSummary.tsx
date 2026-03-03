@@ -27,10 +27,10 @@ export function MacroSummary({ calories, calorieTarget, carbs, fat }: MacroSumma
 
 const styles = StyleSheet.create({
   container: { paddingHorizontal: 24, marginBottom: 16 },
-  calorieRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  calorieRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 4 },
   calorieLabel: { fontSize: 16, fontWeight: '600' },
   calorieValue: { fontSize: 16, fontWeight: '600' },
   calorieTarget: { color: '#999', fontWeight: 'normal' },
-  macroRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  macroRow: { flexDirection: 'row', justifyContent: 'center', gap: 16 },
   macroText: { fontSize: 13, color: '#999' },
 });
