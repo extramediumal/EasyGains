@@ -14,6 +14,7 @@ import { router } from 'expo-router';
 import { supabase } from '../../../src/lib/supabase';
 import { useProfile } from '../../../src/hooks/useProfile';
 import { useNotificationSettings } from '../../../src/hooks/useNotificationSettings';
+import { computeMacroTargets } from '../../../src/lib/macroTargets';
 
 const MEAL_DEFAULTS = [
   { type: 'breakfast', label: 'Breakfast', defaultTime: '08:00' },
@@ -27,7 +28,7 @@ export default function SettingsScreen() {
   const { settings, updateSetting } = useNotificationSettings();
   const [weight, setWeight] = useState('');
   const [calories, setCalories] = useState('');
-  const [activityTarget, setActivityTarget] = useState('5');
+  const [activityTarget, setActivityTarget] = useState('4');
 
   useEffect(() => {
     if (profile) {
@@ -46,7 +47,7 @@ export default function SettingsScreen() {
       .update({
         desired_weight_lbs: parseFloat(weight),
         calorie_target: parseFloat(calories),
-        activity_target: parseFloat(activityTarget) || 5,
+        activity_target: Math.min(10, Math.max(1, parseFloat(activityTarget) || 4)),
       })
       .eq('id', user.id);
 
@@ -58,6 +59,8 @@ export default function SettingsScreen() {
     await supabase.auth.signOut();
     router.replace('/(auth)/login');
   }
+
+  const macroSplit = computeMacroTargets(parseFloat(weight) || 160, parseFloat(calories) || 2000);
 
   function getSettingForMeal(mealType: string) {
     return settings.find((s) => s.meal_type === mealType);
@@ -87,9 +90,14 @@ export default function SettingsScreen() {
           onChangeText={setCalories}
           keyboardType="numeric"
         />
+        {weight && calories ? (
+          <Text style={styles.hint}>
+            Auto-split: {macroSplit.protein}g protein, {macroSplit.fat}g fat, {macroSplit.carbs}g carbs
+          </Text>
+        ) : null}
 
         <Text style={styles.label}>Daily effort target (1-10)</Text>
-        <Text style={styles.hint}>5 = move most days. 8 = serious training.</Text>
+        <Text style={styles.hint}>4 = avg across training + rest days. 6-7 = great workout days.</Text>
         <TextInput
           style={styles.input}
           value={activityTarget}

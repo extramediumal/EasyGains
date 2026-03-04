@@ -3,9 +3,9 @@ import { View, ScrollView, Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ProteinRing } from '../../../src/components/ProteinRing';
+import { MacroTriforce } from '../../../src/components/MacroTriforce';
 import { ActivityRing } from '../../../src/components/ActivityRing';
-import { MacroSummary } from '../../../src/components/MacroSummary';
+import { computeMacroTargets } from '../../../src/lib/macroTargets';
 import { MealCard } from '../../../src/components/MealCard';
 import { WorkoutCard } from '../../../src/components/WorkoutCard';
 import { useTodayMeals } from '../../../src/hooks/useTodayMeals';
@@ -13,20 +13,23 @@ import { useTodayWorkouts } from '../../../src/hooks/useTodayWorkouts';
 import { useProfile } from '../../../src/hooks/useProfile';
 
 export default function HomeScreen() {
-  const { profile } = useProfile();
+  const { profile, refetch: refetchProfile } = useProfile();
   const { meals, totals, loading: mealsLoading, refetch: refetchMeals } = useTodayMeals();
   const { workouts, totals: workoutTotals, loading: workoutsLoading, refetch: refetchWorkouts } = useTodayWorkouts();
 
   useFocusEffect(
     useCallback(() => {
+      refetchProfile();
       refetchMeals();
       refetchWorkouts();
-    }, [refetchMeals, refetchWorkouts])
+    }, [refetchProfile, refetchMeals, refetchWorkouts])
   );
 
-  const proteinTarget = profile?.desired_weight_lbs || 160;
-  const calorieTarget = profile?.calorie_target || 2000;
-  const activityTarget = profile?.activity_target || 5;
+  const macroTargets = computeMacroTargets(
+    profile?.desired_weight_lbs || 160,
+    profile?.calorie_target || 2000,
+  );
+  const activityTarget = profile?.activity_target || 4;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -34,16 +37,18 @@ export default function HomeScreen() {
         <Text style={styles.header}>Today</Text>
 
         <View style={styles.ringsRow}>
-          <ProteinRing current={totals.protein} target={proteinTarget} />
+          <MacroTriforce
+            proteinCurrent={totals.protein}
+            proteinTarget={macroTargets.protein}
+            carbsCurrent={totals.carbs}
+            carbsTarget={macroTargets.carbs}
+            fatCurrent={totals.fat}
+            fatTarget={macroTargets.fat}
+            caloriesCurrent={totals.calories}
+            caloriesTarget={macroTargets.calories}
+          />
           <ActivityRing current={workoutTotals.effort_score} target={activityTarget} />
         </View>
-
-        <MacroSummary
-          calories={totals.calories}
-          calorieTarget={calorieTarget}
-          carbs={totals.carbs}
-          fat={totals.fat}
-        />
 
         <Text style={styles.sectionHeader}>Meals</Text>
         {meals.length === 0 && !mealsLoading && (
@@ -81,7 +86,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 24, paddingTop: 16 },
   header: { fontSize: 28, fontWeight: 'bold', marginBottom: 16 },
-  ringsRow: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginBottom: 8 },
+  ringsRow: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', marginBottom: 8 },
   sectionHeader: { fontSize: 18, fontWeight: '600', marginTop: 8, marginBottom: 12 },
   empty: { textAlign: 'center', color: '#999', marginTop: 24 },
 });

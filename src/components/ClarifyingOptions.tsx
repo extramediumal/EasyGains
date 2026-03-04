@@ -10,7 +10,7 @@ interface ClarifyingOptionsProps {
 export function ClarifyingOptions({ question, options, onSelect }: ClarifyingOptionsProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.question}>{question}</Text>
+      {question ? <Text style={styles.question}>{question}</Text> : null}
       <View style={styles.chips}>
         {options.map((option) => (
           <TouchableOpacity

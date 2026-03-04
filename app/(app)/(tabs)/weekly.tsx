@@ -1,18 +1,32 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { BarChart } from 'react-native-gifted-charts';
 import { useWeeklyMeals } from '../../../src/hooks/useWeeklyMeals';
 import { useWeeklyWorkouts } from '../../../src/hooks/useWeeklyWorkouts';
 import { useProfile } from '../../../src/hooks/useProfile';
+import { computeMacroTargets } from '../../../src/lib/macroTargets';
 
 export default function WeeklyScreen() {
-  const { dailyBreakdown, weeklyAvg, loading } = useWeeklyMeals();
-  const { dailyBreakdown: workoutBreakdown, weeklyAvg: workoutAvg } = useWeeklyWorkouts();
-  const { profile } = useProfile();
+  const { dailyBreakdown, weeklyAvg, loading, refetch: refetchMeals } = useWeeklyMeals();
+  const { dailyBreakdown: workoutBreakdown, weeklyAvg: workoutAvg, refetch: refetchWorkouts } = useWeeklyWorkouts();
+  const { profile, refetch: refetchProfile } = useProfile();
 
-  const proteinTarget = profile?.desired_weight_lbs || 160;
-  const activityTarget = profile?.activity_target || 5;
+  useFocusEffect(
+    useCallback(() => {
+      refetchProfile();
+      refetchMeals();
+      refetchWorkouts();
+    }, [refetchProfile, refetchMeals, refetchWorkouts])
+  );
+
+  const macroTargets = computeMacroTargets(
+    profile?.desired_weight_lbs || 160,
+    profile?.calorie_target || 2000,
+  );
+  const proteinTarget = macroTargets.protein;
+  const activityTarget = profile?.activity_target || 4;
 
   const proteinBarData = dailyBreakdown.map((day) => ({
     value: day.protein,
@@ -65,8 +79,8 @@ export default function WeeklyScreen() {
 
         {/* Carbs/fat - small, not stressed */}
         <View style={styles.secondaryRow}>
-          <Text style={styles.secondaryText}>Avg carbs: {weeklyAvg.carbs}g</Text>
-          <Text style={styles.secondaryText}>Avg fat: {weeklyAvg.fat}g</Text>
+          <Text style={styles.secondaryText}>Avg carbs: {weeklyAvg.carbs}g / {macroTargets.carbs}g</Text>
+          <Text style={styles.secondaryText}>Avg fat: {weeklyAvg.fat}g / {macroTargets.fat}g</Text>
         </View>
 
         {/* Divider */}

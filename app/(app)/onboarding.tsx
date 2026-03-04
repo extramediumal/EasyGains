@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
+import { computeMacroTargets } from '../../src/lib/macroTargets';
 
 export default function OnboardingScreen() {
   const [weight, setWeight] = useState('');
   const [calories, setCalories] = useState('2000');
-  const [activityTarget, setActivityTarget] = useState('5');
+  const [activityTarget, setActivityTarget] = useState('4');
 
   async function handleSave() {
     const weightNum = parseFloat(weight);
@@ -24,7 +25,7 @@ export default function OnboardingScreen() {
       .update({
         desired_weight_lbs: weightNum,
         calorie_target: calorieNum,
-        activity_target: parseFloat(activityTarget) || 5,
+        activity_target: Math.min(10, Math.max(1, parseFloat(activityTarget) || 4)),
       })
       .eq('id', user.id);
 
@@ -36,6 +37,9 @@ export default function OnboardingScreen() {
   }
 
   const proteinTarget = weight ? `${Math.round(parseFloat(weight))}g protein/day` : '';
+  const macroSplit = weight && calories
+    ? computeMacroTargets(parseFloat(weight) || 160, parseFloat(calories) || 2000)
+    : null;
 
   return (
     <View style={styles.container}>
@@ -62,12 +66,17 @@ export default function OnboardingScreen() {
         onChangeText={setCalories}
         keyboardType="numeric"
       />
+      {macroSplit ? (
+        <Text style={styles.hint}>
+          Auto-split: {macroSplit.protein}g protein, {macroSplit.fat}g fat, {macroSplit.carbs}g carbs
+        </Text>
+      ) : null}
 
       <Text style={styles.label}>Daily effort target (1-10)</Text>
-      <Text style={styles.hint}>5 = move most days. 8 = serious training.</Text>
+      <Text style={styles.hint}>4 = avg across training + rest days. 6-7 = great workout days.</Text>
       <TextInput
         style={styles.input}
-        placeholder="e.g. 5"
+        placeholder="e.g. 4"
         value={activityTarget}
         onChangeText={setActivityTarget}
         keyboardType="numeric"

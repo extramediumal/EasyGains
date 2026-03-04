@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -40,33 +40,41 @@ interface ExerciseItem {
 
 const WORKOUT_KEYWORDS = [
   'ran', 'run', 'running', 'jog', 'jogged', 'jogging',
-  'walk', 'walked', 'walking', 'hiked', 'hiking', 'hike',
-  'lifted', 'lifting', 'deadlift', 'squat', 'bench', 'press',
+  'walked', 'walking', 'hiked', 'hiking', 'hike',
+  'lifted', 'lifting', 'deadlift', 'squat', 'bench press',
   'workout', 'worked out', 'exercise', 'exercised', 'training', 'trained',
-  'swim', 'swam', 'swimming', 'biked', 'biking', 'cycling', 'rode',
-  'yoga', 'stretching', 'stretched', 'pushup', 'pullup', 'plank',
-  'cardio', 'hiit', 'crossfit', 'gym', 'basketball', 'soccer', 'tennis',
-  'football', 'volleyball', 'boxing', 'kickboxing', 'martial arts',
-  'jumping', 'jumped', 'sprinted', 'sprint', 'mile', 'miles', 'laps',
-  'reps', 'sets', 'weights', 'dumbbell', 'barbell', 'kettlebell',
+  'swim', 'swam', 'swimming', 'biked', 'biking', 'cycling',
+  'yoga', 'stretching', 'stretched',
+  'push up', 'push-up', 'pushup', 'pull up', 'pull-up', 'pullup', 'plank',
+  'cardio', 'hiit', 'crossfit',
+  'basketball', 'soccer', 'tennis', 'volleyball', 'boxing', 'kickboxing',
+  'sprinted', 'sprint', 'laps',
+  'reps', 'sets', 'dumbbell', 'barbell', 'kettlebell',
 ];
 
 const FOOD_KEYWORDS = [
-  'ate', 'eat', 'eating', 'had', 'drank', 'drink', 'drinking',
-  'breakfast', 'lunch', 'dinner', 'snack', 'meal',
+  'ate', 'eat', 'eating', 'drank', 'drink', 'drinking',
   'chicken', 'beef', 'steak', 'fish', 'salmon', 'shrimp', 'pork',
   'rice', 'pasta', 'bread', 'sandwich', 'burger', 'pizza', 'taco',
   'salad', 'soup', 'egg', 'eggs', 'oatmeal', 'cereal',
   'apple', 'banana', 'orange', 'fruit', 'vegetables', 'veggies',
-  'protein shake', 'smoothie', 'coffee', 'juice', 'milk', 'water',
+  'protein shake', 'smoothie', 'coffee', 'juice', 'milk',
   'yogurt', 'cheese', 'avocado', 'toast', 'bagel', 'pancake',
   'fries', 'chips', 'cookie', 'cake', 'chocolate', 'ice cream',
 ];
 
+function matchesKeyword(text: string, keyword: string): boolean {
+  // Multi-word phrases use includes, single words use word boundary regex
+  if (keyword.includes(' ') || keyword.includes('-')) {
+    return text.includes(keyword);
+  }
+  return new RegExp(`\\b${keyword}\\b`).test(text);
+}
+
 function detectInputType(text: string): 'food' | 'workout' | 'both' {
   const lower = text.toLowerCase();
-  const hasFood = FOOD_KEYWORDS.some((kw) => lower.includes(kw));
-  const hasWorkout = WORKOUT_KEYWORDS.some((kw) => lower.includes(kw));
+  const hasFood = FOOD_KEYWORDS.some((kw) => matchesKeyword(lower, kw));
+  const hasWorkout = WORKOUT_KEYWORDS.some((kw) => matchesKeyword(lower, kw));
 
   if (hasFood && hasWorkout) return 'both';
   if (hasWorkout) return 'workout';
@@ -85,17 +93,43 @@ type ParseState =
 
 export default function VoiceInputScreen() {
   const [transcript, setTranscript] = useState('');
+  const transcriptRef = useRef('');
+  const confirmedRef = useRef('');
+  const parsingRef = useRef(false);
   const [state, setState] = useState<ParseState>({ status: 'idle' });
   const [foodContext, setFoodContext] = useState<Array<{ role: string; content: string }>>([]);
   const [workoutContext, setWorkoutContext] = useState<Array<{ role: string; content: string }>>([]);
+  const [clarifyListening, setClarifyListening] = useState(false);
+
+  // Holds the completed side's result while the other side is being clarified in "both" mode
+  const pendingBothRef = useRef<{
+    foods?: FoodItem[];
+    workout?: { workout_type: WorkoutType; exercises: ExerciseItem[] };
+    pendingWorkoutClarification?: { question: string; options: string[] };
+  } | null>(null);
 
   useSpeechRecognitionEvent('result', (event) => {
-    setTranscript(event.results[0]?.transcript || '');
+    const current = event.results[0]?.transcript || '';
+
+    if (event.isFinal) {
+      confirmedRef.current = (confirmedRef.current + ' ' + current).trim();
+      const full = confirmedRef.current;
+      setTranscript(full);
+      transcriptRef.current = full;
+    } else {
+      const full = (confirmedRef.current + ' ' + current).trim();
+      setTranscript(full);
+      transcriptRef.current = full;
+    }
   });
 
   useSpeechRecognitionEvent('end', () => {
-    if (transcript) {
-      handleParse(transcript);
+    // Guard: stopListening already triggered parse, don't double-fire
+    if (transcriptRef.current && !parsingRef.current) {
+      parsingRef.current = true;
+      handleParse(transcriptRef.current);
+    } else if (!transcriptRef.current && !parsingRef.current) {
+      setState({ status: 'idle' });
     }
   });
 
@@ -105,13 +139,24 @@ export default function VoiceInputScreen() {
 
     setState({ status: 'listening' });
     setTranscript('');
+    transcriptRef.current = '';
+    confirmedRef.current = '';
+    parsingRef.current = false;
     setFoodContext([]);
     setWorkoutContext([]);
-    ExpoSpeechRecognitionModule.start({ lang: 'en-US' });
+    pendingBothRef.current = null;
+    ExpoSpeechRecognitionModule.start({ lang: 'en-US', interimResults: true, continuous: true });
   }
 
   function stopListening() {
     ExpoSpeechRecognitionModule.stop();
+    // Directly trigger parse — don't rely on 'end' event firing
+    if (transcriptRef.current && !parsingRef.current) {
+      parsingRef.current = true;
+      handleParse(transcriptRef.current);
+    } else if (!transcriptRef.current) {
+      setState({ status: 'idle' });
+    }
   }
 
   async function handleParse(text: string) {
@@ -125,11 +170,26 @@ export default function VoiceInputScreen() {
           supabase.functions.invoke('parse-workout', { body: { text } }),
         ]);
 
-        if (foodResult.error) throw foodResult.error;
-        if (workoutResult.error) throw workoutResult.error;
+        const foodOk = !foodResult.error && foodResult.data?.type === 'meal';
+        const workoutOk = !workoutResult.error && workoutResult.data?.type === 'workout';
+        const foodClarify = !foodResult.error && foodResult.data?.type === 'clarification';
+        const workoutClarify = !workoutResult.error && workoutResult.data?.type === 'clarification';
 
-        // If either needs clarification, handle food first
-        if (foodResult.data.type === 'clarification') {
+        if (foodOk && workoutOk) {
+          setState({
+            status: 'parsed_both',
+            foods: foodResult.data.foods,
+            workout_type: workoutResult.data.workout_type,
+            exercises: workoutResult.data.exercises,
+          });
+        } else if (foodClarify) {
+          // Food needs clarification — save workout result (or its clarification) for later
+          if (workoutOk) {
+            pendingBothRef.current = { workout: { workout_type: workoutResult.data.workout_type, exercises: workoutResult.data.exercises } };
+          } else if (workoutClarify) {
+            pendingBothRef.current = { pendingWorkoutClarification: { question: workoutResult.data.question, options: workoutResult.data.options || [] } };
+            setWorkoutContext([{ role: 'user', content: text }]);
+          }
           setFoodContext([{ role: 'user', content: text }]);
           setState({
             status: 'clarifying',
@@ -137,9 +197,11 @@ export default function VoiceInputScreen() {
             question: foodResult.data.question,
             options: foodResult.data.options || [],
           });
-          return;
-        }
-        if (workoutResult.data.type === 'clarification') {
+        } else if (workoutClarify) {
+          // Workout needs clarification — save food result for later
+          if (foodOk) {
+            pendingBothRef.current = { foods: foodResult.data.foods };
+          }
           setWorkoutContext([{ role: 'user', content: text }]);
           setState({
             status: 'clarifying',
@@ -147,15 +209,13 @@ export default function VoiceInputScreen() {
             question: workoutResult.data.question,
             options: workoutResult.data.options || [],
           });
-          return;
+        } else if (foodOk) {
+          setState({ status: 'parsed_food', foods: foodResult.data.foods });
+        } else if (workoutOk) {
+          setState({ status: 'parsed_workout', workout_type: workoutResult.data.workout_type, exercises: workoutResult.data.exercises });
+        } else {
+          throw new Error('Both parsers failed');
         }
-
-        setState({
-          status: 'parsed_both',
-          foods: foodResult.data.foods,
-          workout_type: workoutResult.data.workout_type,
-          exercises: workoutResult.data.exercises,
-        });
       } else if (inputType === 'workout') {
         await parseWorkout(text);
       } else {
@@ -185,7 +245,28 @@ export default function VoiceInputScreen() {
           options: data.options || [],
         });
       } else if (data.type === 'meal') {
-        setState({ status: 'parsed_food', foods: data.foods });
+        const pending = pendingBothRef.current;
+        if (pending?.workout) {
+          // Food resolved — combine with saved workout
+          pendingBothRef.current = null;
+          setState({
+            status: 'parsed_both',
+            foods: data.foods,
+            workout_type: pending.workout.workout_type,
+            exercises: pending.workout.exercises,
+          });
+        } else if (pending?.pendingWorkoutClarification) {
+          // Food resolved — now clarify workout
+          pendingBothRef.current = { foods: data.foods };
+          setState({
+            status: 'clarifying',
+            inputType: 'workout',
+            question: pending.pendingWorkoutClarification.question,
+            options: pending.pendingWorkoutClarification.options,
+          });
+        } else {
+          setState({ status: 'parsed_food', foods: data.foods });
+        }
       }
     } catch (err) {
       setState({ status: 'error', message: 'Failed to parse food. Try again.' });
@@ -211,7 +292,19 @@ export default function VoiceInputScreen() {
           options: data.options || [],
         });
       } else if (data.type === 'workout') {
-        setState({ status: 'parsed_workout', workout_type: data.workout_type, exercises: data.exercises });
+        const pending = pendingBothRef.current;
+        if (pending?.foods) {
+          // Workout resolved — combine with saved food
+          pendingBothRef.current = null;
+          setState({
+            status: 'parsed_both',
+            foods: pending.foods,
+            workout_type: data.workout_type,
+            exercises: data.exercises,
+          });
+        } else {
+          setState({ status: 'parsed_workout', workout_type: data.workout_type, exercises: data.exercises });
+        }
       }
     } catch (err) {
       setState({ status: 'error', message: 'Failed to parse workout. Try again.' });
@@ -220,6 +313,7 @@ export default function VoiceInputScreen() {
 
   async function handleClarificationSelect(option: string) {
     if (state.status !== 'clarifying') return;
+    setClarifyListening(false);
 
     if (state.inputType === 'food') {
       const updatedContext = [...foodContext, { role: 'assistant', content: JSON.stringify(state) }];
@@ -229,6 +323,23 @@ export default function VoiceInputScreen() {
       const updatedContext = [...workoutContext, { role: 'assistant', content: JSON.stringify(state) }];
       setWorkoutContext(updatedContext);
       parseWorkout(option, updatedContext);
+    }
+  }
+
+  async function startClarifyListening() {
+    const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    if (!result.granted) return;
+    setClarifyListening(true);
+    transcriptRef.current = '';
+    confirmedRef.current = '';
+    ExpoSpeechRecognitionModule.start({ lang: 'en-US', interimResults: true, continuous: true });
+  }
+
+  function stopClarifyListening() {
+    ExpoSpeechRecognitionModule.stop();
+    setClarifyListening(false);
+    if (transcriptRef.current) {
+      handleClarificationSelect(transcriptRef.current);
     }
   }
 
@@ -359,14 +470,37 @@ export default function VoiceInputScreen() {
       )}
 
       {state.status === 'clarifying' && (
-        <View>
-          <Text style={styles.transcript}>{transcript}</Text>
-          <ClarifyingOptions
-            question={state.question}
-            options={state.options}
-            onSelect={handleClarificationSelect}
-          />
-        </View>
+        <ScrollView contentContainerStyle={styles.clarifyContainer}>
+          <Text style={styles.clarifyQuestion}>{state.question}</Text>
+
+          {/* Quick-tap options */}
+          {state.options.length > 0 && (
+            <ClarifyingOptions
+              question=""
+              options={state.options}
+              onSelect={handleClarificationSelect}
+            />
+          )}
+
+          {/* Voice answer */}
+          <View style={styles.clarifyMicSection}>
+            <Text style={styles.clarifyOrText}>
+              {state.options.length > 0 ? 'or speak your answer' : 'Tap to answer'}
+            </Text>
+            <TouchableOpacity
+              style={[styles.micButton, clarifyListening && styles.micActive]}
+              onPress={clarifyListening ? stopClarifyListening : startClarifyListening}
+            >
+              <Text style={styles.micIcon}>🎤</Text>
+            </TouchableOpacity>
+            {clarifyListening && (
+              <Text style={styles.hint}>Listening... tap to send</Text>
+            )}
+            {clarifyListening && transcript ? (
+              <Text style={styles.transcript}>{transcript}</Text>
+            ) : null}
+          </View>
+        </ScrollView>
       )}
 
       {showResults && (
@@ -439,4 +573,8 @@ const styles = StyleSheet.create({
   },
   confirmText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   error: { color: '#FF3B30', fontSize: 16, marginBottom: 24 },
+  clarifyContainer: { alignItems: 'center', padding: 24, paddingTop: 40 },
+  clarifyQuestion: { fontSize: 20, fontWeight: '600', textAlign: 'center', marginBottom: 24 },
+  clarifyMicSection: { alignItems: 'center', marginTop: 32 },
+  clarifyOrText: { textAlign: 'center', color: '#999', fontSize: 14, marginBottom: 16 },
 });

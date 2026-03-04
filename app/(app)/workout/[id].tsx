@@ -46,7 +46,8 @@ export default function WorkoutDetailScreen() {
           // If no exercises left, delete the workout
           if (remaining.length === 0) {
             await supabase.from('workouts').delete().eq('id', id);
-            router.back();
+            if (router.canGoBack()) router.back();
+            else router.replace('/(app)/(tabs)');
           }
         },
       },
@@ -70,7 +71,13 @@ export default function WorkoutDetailScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace('/(app)/(tabs)');
+          }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleDeleteWorkout}>

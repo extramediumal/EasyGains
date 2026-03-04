@@ -12,7 +12,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.easygains.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "EasyGains uses speech recognition to log meals and workouts by voice.",
+        "NSMicrophoneUsageDescription": "EasyGains needs microphone access for voice input."
+      }
     },
     "android": {
       "adaptiveIcon": {

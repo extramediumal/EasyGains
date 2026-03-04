@@ -2,36 +2,39 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
-interface ProteinRingProps {
+interface MiniRingProps {
   current: number;
   target: number;
+  size?: number;
+  strokeWidth?: number;
+  color: string;
+  hitColor?: string;
+  label: string;
 }
 
-function getMessage(percent: number): string {
-  if (percent >= 100) return 'Crushed it';
-  if (percent >= 80) return 'Nice work';
-  if (percent >= 50) return 'Keep going';
-  return "Let's eat";
-}
-
-export function ProteinRing({ current, target }: ProteinRingProps) {
-  const percent = Math.min((current / target) * 100, 100);
-  const size = 140;
-  const strokeWidth = 10;
+export function MiniRing({
+  current,
+  target,
+  size = 56,
+  strokeWidth = 6,
+  color,
+  hitColor = '#34C759',
+  label,
+}: MiniRingProps) {
+  const percent = target > 0 ? Math.min((current / target) * 100, 100) : 0;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percent / 100) * circumference;
-
-  const ringColor = percent >= 80 ? '#34C759' : '#000';
+  const ringColor = percent >= 80 ? hitColor : color;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { width: size, height: size }]}>
       <Svg width={size} height={size}>
         <Circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#eee"
+          stroke="#f0f0f0"
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -50,9 +53,8 @@ export function ProteinRing({ current, target }: ProteinRingProps) {
         />
       </Svg>
       <View style={styles.textContainer}>
-        <Text style={styles.current}>{Math.round(current)}</Text>
-        <Text style={styles.target}>of {Math.round(target)}g protein</Text>
-        <Text style={styles.message}>{getMessage(percent)}</Text>
+        <Text style={styles.value}>{Math.round(current)}</Text>
+        <Text style={styles.label}>{label}</Text>
       </View>
     </View>
   );
@@ -61,7 +63,6 @@ export function ProteinRing({ current, target }: ProteinRingProps) {
 const styles = StyleSheet.create({
   container: { alignItems: 'center', justifyContent: 'center' },
   textContainer: { position: 'absolute', alignItems: 'center' },
-  current: { fontSize: 32, fontWeight: 'bold' },
-  target: { fontSize: 12, color: '#666' },
-  message: { fontSize: 12, fontWeight: '600', marginTop: 4, color: '#34C759' },
+  value: { fontSize: 22, fontWeight: 'bold' },
+  label: { fontSize: 12, color: '#888', marginTop: 2, letterSpacing: 0.5 },
 });
