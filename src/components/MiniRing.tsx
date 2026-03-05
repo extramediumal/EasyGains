@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
+import { Colors } from '../lib/theme';
 
 interface MiniRingProps {
   current: number;
@@ -18,7 +19,7 @@ export function MiniRing({
   size = 56,
   strokeWidth = 6,
   color,
-  hitColor = '#34C759',
+  hitColor = Colors.success,
   label,
 }: MiniRingProps) {
   const percent = target > 0 ? Math.min((current / target) * 100, 100) : 0;
@@ -34,7 +35,7 @@ export function MiniRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#f0f0f0"
+          stroke={Colors.ringTrack}
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -64,5 +65,5 @@ const styles = StyleSheet.create({
   container: { alignItems: 'center', justifyContent: 'center' },
   textContainer: { position: 'absolute', alignItems: 'center' },
   value: { fontSize: 22, fontWeight: 'bold' },
-  label: { fontSize: 12, color: '#888', marginTop: 2, letterSpacing: 0.5 },
+  label: { fontSize: 12, color: Colors.textMuted, marginTop: 2, letterSpacing: 0.5 },
 });

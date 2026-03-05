@@ -5,11 +5,23 @@ import {
   ExpoSpeechRecognitionModule,
   useSpeechRecognitionEvent,
 } from 'expo-speech-recognition';
+import Svg, { Path } from 'react-native-svg';
 import { supabase } from '../../src/lib/supabase';
 import { ClarifyingOptions } from '../../src/components/ClarifyingOptions';
 import { ParsedFoodList } from '../../src/components/ParsedFoodList';
 import { ParsedWorkoutList } from '../../src/components/ParsedWorkoutList';
+import { Button } from '../../src/components/Button';
 import { WorkoutType } from '../../src/types/database';
+import { Colors, Radii } from '../../src/lib/theme';
+
+function MicIcon() {
+  return (
+    <Svg width={32} height={32} viewBox="0 0 24 24" fill="white">
+      <Path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5z" />
+      <Path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+    </Svg>
+  );
+}
 
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
@@ -64,7 +76,6 @@ const FOOD_KEYWORDS = [
 ];
 
 function matchesKeyword(text: string, keyword: string): boolean {
-  // Multi-word phrases use includes, single words use word boundary regex
   if (keyword.includes(' ') || keyword.includes('-')) {
     return text.includes(keyword);
   }
@@ -101,7 +112,6 @@ export default function VoiceInputScreen() {
   const [workoutContext, setWorkoutContext] = useState<Array<{ role: string; content: string }>>([]);
   const [clarifyListening, setClarifyListening] = useState(false);
 
-  // Holds the completed side's result while the other side is being clarified in "both" mode
   const pendingBothRef = useRef<{
     foods?: FoodItem[];
     workout?: { workout_type: WorkoutType; exercises: ExerciseItem[] };
@@ -124,7 +134,6 @@ export default function VoiceInputScreen() {
   });
 
   useSpeechRecognitionEvent('end', () => {
-    // Guard: stopListening already triggered parse, don't double-fire
     if (transcriptRef.current && !parsingRef.current) {
       parsingRef.current = true;
       handleParse(transcriptRef.current);
@@ -150,7 +159,6 @@ export default function VoiceInputScreen() {
 
   function stopListening() {
     ExpoSpeechRecognitionModule.stop();
-    // Directly trigger parse — don't rely on 'end' event firing
     if (transcriptRef.current && !parsingRef.current) {
       parsingRef.current = true;
       handleParse(transcriptRef.current);
@@ -183,7 +191,6 @@ export default function VoiceInputScreen() {
             exercises: workoutResult.data.exercises,
           });
         } else if (foodClarify) {
-          // Food needs clarification — save workout result (or its clarification) for later
           if (workoutOk) {
             pendingBothRef.current = { workout: { workout_type: workoutResult.data.workout_type, exercises: workoutResult.data.exercises } };
           } else if (workoutClarify) {
@@ -198,7 +205,6 @@ export default function VoiceInputScreen() {
             options: foodResult.data.options || [],
           });
         } else if (workoutClarify) {
-          // Workout needs clarification — save food result for later
           if (foodOk) {
             pendingBothRef.current = { foods: foodResult.data.foods };
           }
@@ -247,7 +253,6 @@ export default function VoiceInputScreen() {
       } else if (data.type === 'meal') {
         const pending = pendingBothRef.current;
         if (pending?.workout) {
-          // Food resolved — combine with saved workout
           pendingBothRef.current = null;
           setState({
             status: 'parsed_both',
@@ -256,7 +261,6 @@ export default function VoiceInputScreen() {
             exercises: pending.workout.exercises,
           });
         } else if (pending?.pendingWorkoutClarification) {
-          // Food resolved — now clarify workout
           pendingBothRef.current = { foods: data.foods };
           setState({
             status: 'clarifying',
@@ -294,7 +298,6 @@ export default function VoiceInputScreen() {
       } else if (data.type === 'workout') {
         const pending = pendingBothRef.current;
         if (pending?.foods) {
-          // Workout resolved — combine with saved food
           pendingBothRef.current = null;
           setState({
             status: 'parsed_both',
@@ -382,7 +385,7 @@ export default function VoiceInputScreen() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    const totals = exercises.reduce(
+    const sums = exercises.reduce(
       (acc, e) => ({
         effort_score: acc.effort_score + e.effort_score,
         duration_min: acc.duration_min + e.duration_min,
@@ -391,15 +394,18 @@ export default function VoiceInputScreen() {
       { effort_score: 0, duration_min: 0, calories_burned: 0 }
     );
 
+    // Effort is session intensity (1-10), not cumulative — average across exercises
+    const avgEffort = Math.round(sums.effort_score / exercises.length);
+
     const { data: workout, error: workoutError } = await supabase
       .from('workouts')
       .insert({
         user_id: session.user.id,
         workout_type: workoutType,
         raw_input: transcript,
-        total_effort_score: totals.effort_score,
-        total_duration_min: totals.duration_min,
-        total_calories_burned: totals.calories_burned,
+        total_effort_score: avgEffort,
+        total_duration_min: sums.duration_min,
+        total_calories_burned: sums.calories_burned,
       })
       .select()
       .single();
@@ -437,15 +443,15 @@ export default function VoiceInputScreen() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.close} onPress={goBack}>
-        <Text style={styles.closeText}>Cancel</Text>
-      </TouchableOpacity>
+      <View style={styles.close}>
+        <Button title="Cancel" onPress={goBack} variant="secondary" />
+      </View>
 
       {state.status === 'idle' && (
         <View style={styles.center}>
           <Text style={styles.prompt}>What did you eat or do?</Text>
           <TouchableOpacity style={styles.micButton} onPress={startListening}>
-            <Text style={styles.micIcon}>🎤</Text>
+            <MicIcon />
           </TouchableOpacity>
           <Text style={styles.hint}>Tap to speak</Text>
         </View>
@@ -455,7 +461,7 @@ export default function VoiceInputScreen() {
         <View style={styles.center}>
           <Text style={styles.prompt}>Listening...</Text>
           <TouchableOpacity style={[styles.micButton, styles.micActive]} onPress={stopListening}>
-            <Text style={styles.micIcon}>🎤</Text>
+            <MicIcon />
           </TouchableOpacity>
           {transcript ? <Text style={styles.transcript}>{transcript}</Text> : null}
         </View>
@@ -473,7 +479,6 @@ export default function VoiceInputScreen() {
         <ScrollView contentContainerStyle={styles.clarifyContainer}>
           <Text style={styles.clarifyQuestion}>{state.question}</Text>
 
-          {/* Quick-tap options */}
           {state.options.length > 0 && (
             <ClarifyingOptions
               question=""
@@ -482,7 +487,6 @@ export default function VoiceInputScreen() {
             />
           )}
 
-          {/* Voice answer */}
           <View style={styles.clarifyMicSection}>
             <Text style={styles.clarifyOrText}>
               {state.options.length > 0 ? 'or speak your answer' : 'Tap to answer'}
@@ -491,7 +495,7 @@ export default function VoiceInputScreen() {
               style={[styles.micButton, clarifyListening && styles.micActive]}
               onPress={clarifyListening ? stopClarifyListening : startClarifyListening}
             >
-              <Text style={styles.micIcon}>🎤</Text>
+              <MicIcon />
             </TouchableOpacity>
             {clarifyListening && (
               <Text style={styles.hint}>Listening... tap to send</Text>
@@ -525,9 +529,9 @@ export default function VoiceInputScreen() {
             </View>
           )}
 
-          <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
-            <Text style={styles.confirmText}>Log it</Text>
-          </TouchableOpacity>
+          <View style={styles.confirmContainer}>
+            <Button title="Log it" onPress={handleConfirm} variant="primary" />
+          </View>
         </ScrollView>
       )}
 
@@ -535,7 +539,7 @@ export default function VoiceInputScreen() {
         <View style={styles.center}>
           <Text style={styles.error}>{state.message}</Text>
           <TouchableOpacity style={styles.micButton} onPress={startListening}>
-            <Text style={styles.micIcon}>🎤</Text>
+            <MicIcon />
           </TouchableOpacity>
         </View>
       )}
@@ -544,37 +548,28 @@ export default function VoiceInputScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingTop: 60 },
+  container: { flex: 1, backgroundColor: Colors.background, paddingTop: 60 },
   close: { position: 'absolute', top: 60, left: 24, zIndex: 10 },
-  closeText: { fontSize: 16, color: '#666' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   prompt: { fontSize: 24, fontWeight: '600', marginBottom: 32 },
   micButton: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#000',
+    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  micActive: { backgroundColor: '#FF3B30' },
-  micIcon: { fontSize: 32 },
-  hint: { marginTop: 16, color: '#999' },
+  micActive: { backgroundColor: Colors.destructive },
+  hint: { marginTop: 16, color: Colors.textMuted },
   transcript: { fontSize: 16, color: '#333', padding: 24, textAlign: 'center' },
-  processingText: { marginTop: 16, color: '#666' },
+  processingText: { marginTop: 16, color: Colors.textSecondary },
   resultContainer: { flex: 1 },
   sectionTitle: { fontSize: 18, fontWeight: '600', paddingHorizontal: 24, marginTop: 8 },
-  confirmButton: {
-    backgroundColor: '#000',
-    borderRadius: 8,
-    padding: 16,
-    margin: 24,
-    alignItems: 'center',
-  },
-  confirmText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  error: { color: '#FF3B30', fontSize: 16, marginBottom: 24 },
+  confirmContainer: { margin: 24 },
+  error: { color: Colors.destructive, fontSize: 16, marginBottom: 24 },
   clarifyContainer: { alignItems: 'center', padding: 24, paddingTop: 40 },
   clarifyQuestion: { fontSize: 20, fontWeight: '600', textAlign: 'center', marginBottom: 24 },
   clarifyMicSection: { alignItems: 'center', marginTop: 32 },
-  clarifyOrText: { textAlign: 'center', color: '#999', fontSize: 14, marginBottom: 16 },
+  clarifyOrText: { textAlign: 'center', color: Colors.textMuted, fontSize: 14, marginBottom: 16 },
 });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
+import { Colors } from '../lib/theme';
 
 interface ActivityRingProps {
   current: number;
@@ -23,7 +24,7 @@ export function ActivityRing({ current, target }: ActivityRingProps) {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percent / 100) * circumference;
 
-  const ringColor = percent >= 80 ? '#34C759' : '#007AFF';
+  const ringColor = percent >= 80 ? Colors.success : Colors.effort;
 
   return (
     <View style={styles.wrapper}>
@@ -33,7 +34,7 @@ export function ActivityRing({ current, target }: ActivityRingProps) {
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="#eee"
+            stroke={Colors.ringTrack}
             strokeWidth={strokeWidth}
             fill="none"
           />
@@ -66,6 +67,6 @@ const styles = StyleSheet.create({
   container: { alignItems: 'center', justifyContent: 'center' },
   textContainer: { position: 'absolute', alignItems: 'center' },
   current: { fontSize: 32, fontWeight: 'bold' },
-  target: { fontSize: 12, color: '#666' },
+  target: { fontSize: 12, color: Colors.textSecondary },
   message: { fontSize: 13, fontWeight: '600', marginTop: 6 },
 });

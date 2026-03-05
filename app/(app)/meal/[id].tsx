@@ -11,10 +11,17 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMealItems } from '../../../src/hooks/useMealItems';
 import { supabase } from '../../../src/lib/supabase';
+import { Button } from '../../../src/components/Button';
+import { Colors, Radii, Spacing } from '../../../src/lib/theme';
 
 export default function MealDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { items, deleteItem } = useMealItems(id!);
+
+  function goBack() {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(app)/(tabs)');
+  }
 
   async function handleDeleteItem(itemId: string, name: string) {
     Alert.alert('Delete item', `Remove "${name}"?`, [
@@ -24,7 +31,6 @@ export default function MealDetailScreen() {
         style: 'destructive',
         onPress: async () => {
           await deleteItem(itemId);
-          // Recalculate meal totals
           const remaining = items.filter((i) => i.id !== itemId);
           const totals = remaining.reduce(
             (acc, i) => ({
@@ -45,11 +51,9 @@ export default function MealDetailScreen() {
             })
             .eq('id', id);
 
-          // If no items left, delete the meal
           if (remaining.length === 0) {
             await supabase.from('meals').delete().eq('id', id);
-            if (router.canGoBack()) router.back();
-            else router.replace('/(app)/(tabs)');
+            goBack();
           }
         },
       },
@@ -73,18 +77,8 @@ export default function MealDetailScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.headerRow}>
-        <TouchableOpacity
-          onPress={() => {
-            if (router.canGoBack()) router.back();
-            else router.replace('/(app)/(tabs)');
-          }}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleDeleteMeal}>
-          <Text style={styles.deleteAll}>Delete meal</Text>
-        </TouchableOpacity>
+        <Button title="Back" onPress={goBack} variant="secondary" />
+        <Button title="Delete meal" onPress={handleDeleteMeal} variant="destructive" />
       </View>
 
       <ScrollView style={styles.container}>
@@ -98,8 +92,11 @@ export default function MealDetailScreen() {
                 {item.protein}g P · {item.calories} cal · C: {item.carbs}g · F: {item.fat}g
               </Text>
             </View>
-            <TouchableOpacity onPress={() => handleDeleteItem(item.id, item.name)}>
-              <Text style={styles.deleteText}>×</Text>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleDeleteItem(item.id, item.name)}
+            >
+              <Text style={styles.deleteButtonText}>×</Text>
             </TouchableOpacity>
           </View>
         ))}
@@ -109,23 +106,30 @@ export default function MealDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 16 },
-  backText: { fontSize: 16, color: '#000' },
-  deleteAll: { fontSize: 16, color: '#FF3B30' },
-  container: { flex: 1, padding: 16 },
+  safe: { flex: 1, backgroundColor: Colors.background },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.cardPadding, paddingVertical: 8 },
+  container: { flex: 1, padding: Spacing.cardPadding },
   title: { fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f8f8',
-    borderRadius: 12,
+    backgroundColor: Colors.cardBackground,
+    borderRadius: Radii.card,
     padding: 14,
     marginBottom: 8,
   },
   itemInfo: { flex: 1 },
   itemName: { fontSize: 16, fontWeight: '600' },
-  itemPortion: { fontSize: 13, color: '#999', marginTop: 2 },
-  itemMacros: { fontSize: 13, color: '#666', marginTop: 4 },
-  deleteText: { fontSize: 24, color: '#FF3B30', paddingLeft: 12 },
+  itemPortion: { fontSize: 13, color: Colors.textMuted, marginTop: 2 },
+  itemMacros: { fontSize: 13, color: Colors.textSecondary, marginTop: 4 },
+  deleteButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.destructive,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  deleteButtonText: { fontSize: 20, color: Colors.white, fontWeight: '600', marginTop: -1 },
 });

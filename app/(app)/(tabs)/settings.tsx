@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   ScrollView,
   Switch,
@@ -15,6 +14,8 @@ import { supabase } from '../../../src/lib/supabase';
 import { useProfile } from '../../../src/hooks/useProfile';
 import { useNotificationSettings } from '../../../src/hooks/useNotificationSettings';
 import { computeMacroTargets } from '../../../src/lib/macroTargets';
+import { Button } from '../../../src/components/Button';
+import { Colors, Radii, Spacing } from '../../../src/lib/theme';
 
 const MEAL_DEFAULTS = [
   { type: 'breakfast', label: 'Breakfast', defaultTime: '08:00' },
@@ -71,7 +72,6 @@ export default function SettingsScreen() {
       <ScrollView style={styles.container}>
         <Text style={styles.header}>Settings</Text>
 
-        {/* Profile Section */}
         <Text style={styles.sectionTitle}>Profile</Text>
 
         <Text style={styles.label}>Desired weight (lbs)</Text>
@@ -105,11 +105,10 @@ export default function SettingsScreen() {
           keyboardType="numeric"
         />
 
-        <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
-          <Text style={styles.saveText}>Save</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonContainer}>
+          <Button title="Save" onPress={handleSaveProfile} variant="primary" />
+        </View>
 
-        {/* Notifications Section */}
         <Text style={styles.sectionTitle}>Reminders</Text>
 
         {MEAL_DEFAULTS.map((meal) => {
@@ -130,35 +129,32 @@ export default function SettingsScreen() {
           );
         })}
 
-        {/* Logout */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Log out</Text>
-        </TouchableOpacity>
+        <View style={styles.logoutContainer}>
+          <Button title="Log out" onPress={handleLogout} variant="destructive" />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
-  container: { flex: 1, padding: 24 },
+  safe: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1, padding: Spacing.screenPadding },
   header: { fontSize: 28, fontWeight: 'bold', marginBottom: 24 },
   sectionTitle: { fontSize: 18, fontWeight: '600', marginTop: 24, marginBottom: 12 },
   label: { fontSize: 14, fontWeight: '600', marginTop: 12, marginBottom: 4 },
-  hint: { fontSize: 13, color: '#34C759', marginBottom: 8 },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, fontSize: 16 },
-  saveButton: { backgroundColor: '#000', borderRadius: 8, padding: 14, alignItems: 'center', marginTop: 16 },
-  saveText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  hint: { fontSize: 13, color: Colors.success, marginBottom: 8 },
+  input: { borderWidth: 1, borderColor: Colors.inputBorder, borderRadius: Radii.input, padding: 12, fontSize: 16 },
+  buttonContainer: { marginTop: 16 },
   notifRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: Colors.chipBackground,
   },
   notifLabel: { fontSize: 16, flex: 1 },
-  notifTime: { fontSize: 14, color: '#999', marginRight: 12 },
-  logoutButton: { marginTop: 40, marginBottom: 40, alignItems: 'center' },
-  logoutText: { fontSize: 16, color: '#FF3B30' },
+  notifTime: { fontSize: 14, color: Colors.textMuted, marginRight: 12 },
+  logoutContainer: { marginTop: 40, marginBottom: 40 },
 });

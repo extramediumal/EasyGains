@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
+import { Button } from '../../src/components/Button';
+import { Colors, Radii, Spacing } from '../../src/lib/theme';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -36,23 +38,28 @@ export default function LoginScreen() {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? 'Loading...' : 'Log In'}</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <Button
+          title={loading ? 'Loading...' : 'Log In'}
+          onPress={handleLogin}
+          disabled={loading}
+          variant="primary"
+        />
+      </View>
 
-      <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-        <Text style={styles.link}>Don't have an account? Sign up</Text>
-      </TouchableOpacity>
+      <Button
+        title="Don't have an account? Sign up"
+        onPress={() => router.push('/(auth)/signup')}
+        variant="ghost"
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
+  container: { flex: 1, justifyContent: 'center', padding: Spacing.screenPadding, backgroundColor: Colors.background },
   title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 4 },
-  subtitle: { fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 32 },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 14, fontSize: 16, marginBottom: 12 },
-  button: { backgroundColor: '#000', borderRadius: 8, padding: 16, alignItems: 'center', marginTop: 8 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  link: { textAlign: 'center', marginTop: 16, color: '#666' },
+  subtitle: { fontSize: 16, color: Colors.textSecondary, textAlign: 'center', marginBottom: 32 },
+  input: { borderWidth: 1, borderColor: Colors.inputBorder, borderRadius: Radii.input, padding: 14, fontSize: 16, marginBottom: 12 },
+  buttonContainer: { marginTop: 8 },
 });

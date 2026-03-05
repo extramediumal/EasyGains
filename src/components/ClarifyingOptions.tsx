@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Colors, Radii } from '../lib/theme';
 
 interface ClarifyingOptionsProps {
   question: string;
@@ -31,8 +32,8 @@ const styles = StyleSheet.create({
   question: { fontSize: 16, fontWeight: '600', marginBottom: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: 20,
+    backgroundColor: Colors.chipBackground,
+    borderRadius: Radii.chip,
     paddingHorizontal: 16,
     paddingVertical: 10,
   },

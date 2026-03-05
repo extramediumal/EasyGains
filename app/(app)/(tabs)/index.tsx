@@ -11,6 +11,7 @@ import { WorkoutCard } from '../../../src/components/WorkoutCard';
 import { useTodayMeals } from '../../../src/hooks/useTodayMeals';
 import { useTodayWorkouts } from '../../../src/hooks/useTodayWorkouts';
 import { useProfile } from '../../../src/hooks/useProfile';
+import { Colors, Spacing } from '../../../src/lib/theme';
 
 export default function HomeScreen() {
   const { profile, refetch: refetchProfile } = useProfile();
@@ -74,7 +75,6 @@ export default function HomeScreen() {
           />
         ))}
 
-        {/* Spacer for mic button */}
         <View style={{ height: 80 }} />
       </ScrollView>
     </SafeAreaView>
@@ -82,11 +82,11 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  safe: { flex: 1, backgroundColor: Colors.background },
   container: { flex: 1 },
-  content: { paddingHorizontal: 24, paddingTop: 16 },
+  content: { paddingHorizontal: Spacing.screenPadding, paddingTop: 16 },
   header: { fontSize: 28, fontWeight: 'bold', marginBottom: 16 },
   ringsRow: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', marginBottom: 8 },
   sectionHeader: { fontSize: 18, fontWeight: '600', marginTop: 8, marginBottom: 12 },
-  empty: { textAlign: 'center', color: '#999', marginTop: 24 },
+  empty: { textAlign: 'center', color: Colors.textMuted, marginTop: 24 },
 });

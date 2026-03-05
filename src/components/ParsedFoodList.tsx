@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Colors, Radii } from '../lib/theme';
 
 interface FoodItem {
   name: string;
@@ -37,12 +38,12 @@ export function ParsedFoodList({ foods }: ParsedFoodListProps) {
 
 const styles = StyleSheet.create({
   container: { padding: 16 },
-  item: { backgroundColor: '#f8f8f8', borderRadius: 12, padding: 14, marginBottom: 8 },
+  item: { backgroundColor: Colors.cardBackground, borderRadius: Radii.card, padding: 14, marginBottom: 8 },
   header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   name: { fontSize: 16, fontWeight: '600' },
-  portion: { fontSize: 14, color: '#999' },
+  portion: { fontSize: 14, color: Colors.textMuted },
   macros: { flexDirection: 'row', gap: 12 },
   protein: { fontSize: 14, fontWeight: '600' },
-  macro: { fontSize: 14, color: '#666' },
-  secondary: { fontSize: 13, color: '#999' },
+  macro: { fontSize: 14, color: Colors.textSecondary },
+  secondary: { fontSize: 13, color: Colors.textMuted },
 });

@@ -11,10 +11,17 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWorkoutExercises } from '../../../src/hooks/useWorkoutExercises';
 import { supabase } from '../../../src/lib/supabase';
+import { Button } from '../../../src/components/Button';
+import { Colors, Radii, Spacing } from '../../../src/lib/theme';
 
 export default function WorkoutDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { exercises, deleteExercise } = useWorkoutExercises(id!);
+
+  function goBack() {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(app)/(tabs)');
+  }
 
   async function handleDeleteExercise(exerciseId: string, name: string) {
     Alert.alert('Delete exercise', `Remove "${name}"?`, [
@@ -24,9 +31,8 @@ export default function WorkoutDetailScreen() {
         style: 'destructive',
         onPress: async () => {
           await deleteExercise(exerciseId);
-          // Recalculate workout totals
           const remaining = exercises.filter((e) => e.id !== exerciseId);
-          const totals = remaining.reduce(
+          const sums = remaining.reduce(
             (acc, e) => ({
               effort_score: acc.effort_score + e.effort_score,
               duration_min: acc.duration_min + e.duration_min,
@@ -37,17 +43,17 @@ export default function WorkoutDetailScreen() {
           await supabase
             .from('workouts')
             .update({
-              total_effort_score: totals.effort_score,
-              total_duration_min: totals.duration_min,
-              total_calories_burned: totals.calories_burned,
+              total_effort_score: remaining.length > 0
+                ? Math.round(sums.effort_score / remaining.length)
+                : 0,
+              total_duration_min: sums.duration_min,
+              total_calories_burned: sums.calories_burned,
             })
             .eq('id', id);
 
-          // If no exercises left, delete the workout
           if (remaining.length === 0) {
             await supabase.from('workouts').delete().eq('id', id);
-            if (router.canGoBack()) router.back();
-            else router.replace('/(app)/(tabs)');
+            goBack();
           }
         },
       },
@@ -71,18 +77,8 @@ export default function WorkoutDetailScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.headerRow}>
-        <TouchableOpacity
-          onPress={() => {
-            if (router.canGoBack()) router.back();
-            else router.replace('/(app)/(tabs)');
-          }}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleDeleteWorkout}>
-          <Text style={styles.deleteAll}>Delete workout</Text>
-        </TouchableOpacity>
+        <Button title="Back" onPress={goBack} variant="secondary" />
+        <Button title="Delete workout" onPress={handleDeleteWorkout} variant="destructive" />
       </View>
 
       <ScrollView style={styles.container}>
@@ -96,8 +92,11 @@ export default function WorkoutDetailScreen() {
                 Effort: {exercise.effort_score} · {exercise.duration_min} min · {exercise.calories_burned} cal
               </Text>
             </View>
-            <TouchableOpacity onPress={() => handleDeleteExercise(exercise.id, exercise.name)}>
-              <Text style={styles.deleteText}>×</Text>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleDeleteExercise(exercise.id, exercise.name)}
+            >
+              <Text style={styles.deleteButtonText}>×</Text>
             </TouchableOpacity>
           </View>
         ))}
@@ -107,23 +106,30 @@ export default function WorkoutDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 16 },
-  backText: { fontSize: 16, color: '#000' },
-  deleteAll: { fontSize: 16, color: '#FF3B30' },
-  container: { flex: 1, padding: 16 },
+  safe: { flex: 1, backgroundColor: Colors.background },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.cardPadding, paddingVertical: 8 },
+  container: { flex: 1, padding: Spacing.cardPadding },
   title: { fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f8f8',
-    borderRadius: 12,
+    backgroundColor: Colors.cardBackground,
+    borderRadius: Radii.card,
     padding: 14,
     marginBottom: 8,
   },
   itemInfo: { flex: 1 },
   itemName: { fontSize: 16, fontWeight: '600' },
-  itemDetail: { fontSize: 13, color: '#999', marginTop: 2 },
-  itemStats: { fontSize: 13, color: '#666', marginTop: 4 },
-  deleteText: { fontSize: 24, color: '#FF3B30', paddingLeft: 12 },
+  itemDetail: { fontSize: 13, color: Colors.textMuted, marginTop: 2 },
+  itemStats: { fontSize: 13, color: Colors.textSecondary, marginTop: 4 },
+  deleteButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.destructive,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  deleteButtonText: { fontSize: 20, color: Colors.white, fontWeight: '600', marginTop: -1 },
 });

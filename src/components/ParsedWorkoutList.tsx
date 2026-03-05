@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Colors, Radii } from '../lib/theme';
 
 interface ExerciseItem {
   name: string;
@@ -35,11 +36,11 @@ export function ParsedWorkoutList({ exercises }: ParsedWorkoutListProps) {
 
 const styles = StyleSheet.create({
   container: { padding: 16 },
-  item: { backgroundColor: '#f8f8f8', borderRadius: 12, padding: 14, marginBottom: 8 },
+  item: { backgroundColor: Colors.cardBackground, borderRadius: Radii.card, padding: 14, marginBottom: 8 },
   header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   name: { fontSize: 16, fontWeight: '600' },
-  effort: { fontSize: 14, fontWeight: '600', color: '#007AFF' },
+  effort: { fontSize: 14, fontWeight: '600', color: Colors.effort },
   stats: { flexDirection: 'row', gap: 12 },
-  detail: { fontSize: 14, color: '#666', flex: 1 },
-  secondary: { fontSize: 13, color: '#999' },
+  detail: { fontSize: 14, color: Colors.textSecondary, flex: 1 },
+  secondary: { fontSize: 13, color: Colors.textMuted },
 });

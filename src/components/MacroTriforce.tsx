@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MiniRing } from './MiniRing';
 import { getCalorieBudgetStatus } from '../lib/macroTargets';
+import { Colors } from '../lib/theme';
 
 interface MacroTriforceProps {
   proteinCurrent: number;
@@ -18,8 +19,8 @@ const RING_SIZE = 96;
 
 const TINT_COLORS: Record<string, string> = {
   under: 'transparent',
-  approaching: '#FFF8E1',
-  over: '#FFEBEE',
+  approaching: Colors.calorieTintApproaching,
+  over: Colors.calorieTintOver,
 };
 
 export function MacroTriforce({
@@ -43,7 +44,7 @@ export function MacroTriforce({
         <MiniRing
           current={proteinCurrent}
           target={proteinTarget}
-          color="#000"
+          color={Colors.protein}
           label="Protein"
           size={RING_SIZE}
           strokeWidth={8}
@@ -53,7 +54,7 @@ export function MacroTriforce({
         <MiniRing
           current={carbsCurrent}
           target={carbsTarget}
-          color="#FF9500"
+          color={Colors.carbs}
           label="Carbs"
           size={RING_SIZE}
           strokeWidth={8}
@@ -61,7 +62,7 @@ export function MacroTriforce({
         <MiniRing
           current={fatCurrent}
           target={fatTarget}
-          color="#AF52DE"
+          color={Colors.fat}
           label="Fat"
           size={RING_SIZE}
           strokeWidth={8}
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
   },
   calorieText: {
     fontSize: 13,
-    color: '#999',
+    color: Colors.textMuted,
     marginTop: 8,
     fontWeight: '500',
   },

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { computeMacroTargets } from '../../src/lib/macroTargets';
+import { Button } from '../../src/components/Button';
+import { Colors, Radii, Spacing } from '../../src/lib/theme';
 
 export default function OnboardingScreen() {
   const [weight, setWeight] = useState('');
@@ -55,7 +57,7 @@ export default function OnboardingScreen() {
         onChangeText={setWeight}
         keyboardType="numeric"
       />
-      {proteinTarget ? <Text style={styles.proteinHint}>→ {proteinTarget}</Text> : null}
+      {proteinTarget ? <Text style={styles.proteinHint}>{proteinTarget}</Text> : null}
 
       <Text style={styles.label}>Daily calorie target</Text>
       <Text style={styles.hint}>A reasonable starting point for most people is 2000</Text>
@@ -82,21 +84,20 @@ export default function OnboardingScreen() {
         keyboardType="numeric"
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleSave}>
-        <Text style={styles.buttonText}>Let's Go</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <Button title="Let's Go" onPress={handleSave} variant="primary" />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
+  container: { flex: 1, justifyContent: 'center', padding: Spacing.screenPadding, backgroundColor: Colors.background },
   title: { fontSize: 28, fontWeight: 'bold', marginBottom: 4 },
-  subtitle: { fontSize: 16, color: '#666', marginBottom: 32 },
+  subtitle: { fontSize: 16, color: Colors.textSecondary, marginBottom: 32 },
   label: { fontSize: 16, fontWeight: '600', marginTop: 16, marginBottom: 2 },
-  hint: { fontSize: 13, color: '#999', marginBottom: 8 },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 14, fontSize: 18, marginBottom: 4 },
-  proteinHint: { fontSize: 14, color: '#34C759', fontWeight: '600', marginBottom: 8 },
-  button: { backgroundColor: '#000', borderRadius: 8, padding: 16, alignItems: 'center', marginTop: 24 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  hint: { fontSize: 13, color: Colors.textMuted, marginBottom: 8 },
+  input: { borderWidth: 1, borderColor: Colors.inputBorder, borderRadius: Radii.input, padding: 14, fontSize: 18, marginBottom: 4 },
+  proteinHint: { fontSize: 14, color: Colors.success, fontWeight: '600', marginBottom: 8 },
+  buttonContainer: { marginTop: 24 },
 });

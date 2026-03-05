@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import { Colors, Radii, Spacing } from '../lib/theme';
 
 interface WorkoutCardProps {
   workout: {
@@ -38,12 +39,12 @@ export function WorkoutCard({ workout, onPress }: WorkoutCardProps) {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#f8f8f8', borderRadius: 12, padding: 16, marginBottom: 8 },
+  card: { backgroundColor: Colors.cardBackground, borderRadius: Radii.card, padding: Spacing.cardPadding, marginBottom: 8 },
   header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   label: { fontSize: 16, fontWeight: '600' },
-  time: { fontSize: 14, color: '#999' },
+  time: { fontSize: 14, color: Colors.textMuted },
   stats: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
   effort: { fontSize: 16, fontWeight: '600' },
-  duration: { fontSize: 14, color: '#666' },
-  secondary: { fontSize: 12, color: '#999' },
+  duration: { fontSize: 14, color: Colors.textSecondary },
+  secondary: { fontSize: 12, color: Colors.textMuted },
 });
