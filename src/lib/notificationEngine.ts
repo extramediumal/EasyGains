@@ -1,4 +1,4 @@
-import { NotificationTip, NotificationLevel } from '../types/database';
+import { NotificationTip, NotificationLevel, PersonalityTier } from '../types/database';
 
 export interface MealWindow {
   type: string;
@@ -17,10 +17,56 @@ export interface PlannedNotification {
 
 export interface NotificationPlanInput {
   level: NotificationLevel;
+  personalityTier?: PersonalityTier;
   missedMeals: MealWindow[];
   tips: NotificationTip[];
   daysSinceWorkout: number;
   weeklyProteinPct: number;
+}
+
+const REACTIVE_MESSAGES: Record<string, Record<string, string[]>> = {
+  missed_meal: {
+    helpful: [
+      "Hey, no {meal} logged — did you eat?",
+      "Don't forget to log your {meal}!",
+      "Your {meal} is missing from today's log.",
+    ],
+    unhinged: [
+      "No {meal}? Starving yourself isn't a diet strategy, genius.",
+      "Did you forget to eat {meal} or forget to log it? Both are bad.",
+      "Hello? {meal}? Anyone home?",
+    ],
+  },
+  no_workout: {
+    helpful: [
+      "You gonna move today? Even a walk counts.",
+      "Haven't seen a workout in a few days — how about some movement?",
+      "Your body is made to move. Even 10 minutes helps.",
+    ],
+    unhinged: [
+      "Your couch called. It said even IT is tired of you.",
+      "Rest day again? Impressive commitment to doing nothing.",
+      "You haven't worked out in days. Just saying.",
+    ],
+  },
+  low_protein: {
+    helpful: [
+      "You're behind on protein this week — maybe grab a shake?",
+      "Protein is running low this week. Time to catch up!",
+      "Your muscles need fuel. Try to get more protein in today.",
+    ],
+    unhinged: [
+      "Your muscles are literally eating themselves rn.",
+      "Protein this week? Pathetic. Do better.",
+      "At this rate your gains are filing for divorce.",
+    ],
+  },
+};
+
+function pickReactiveMessage(trigger: string, tier: PersonalityTier, mealType?: string): string {
+  const messages = REACTIVE_MESSAGES[trigger]?.[tier] || REACTIVE_MESSAGES[trigger]?.helpful || ['Check your app!'];
+  const message = messages[Math.floor(Math.random() * messages.length)];
+  return mealType ? message.replace(/{meal}/g, mealType) : message;
 }
 
 const LEVEL_MAX: Record<number, number> = {
@@ -55,6 +101,7 @@ export function buildNotificationPlan(input: NotificationPlanInput): PlannedNoti
   const max = getMaxNotifications(input.level);
   if (max === 0) return [];
 
+  const tier: PersonalityTier = input.personalityTier || 'helpful';
   const plan: PlannedNotification[] = [];
 
   // Priority 1: Missed meal nudges
@@ -65,7 +112,7 @@ export function buildNotificationPlan(input: NotificationPlanInput): PlannedNoti
       trigger: 'missed_meal',
       mealType: meal.type,
       title: 'EasyGains',
-      body: `Hey, no ${meal.type} logged — did you eat?`,
+      body: pickReactiveMessage('missed_meal', tier, meal.type),
       hour: meal.hour + 1,
       minute: 30,
     });
@@ -77,7 +124,7 @@ export function buildNotificationPlan(input: NotificationPlanInput): PlannedNoti
       type: 'reactive',
       trigger: 'no_workout',
       title: 'EasyGains',
-      body: "You gonna move today? Even a walk counts.",
+      body: pickReactiveMessage('no_workout', tier),
       hour: 17,
       minute: 0,
     });
@@ -89,7 +136,7 @@ export function buildNotificationPlan(input: NotificationPlanInput): PlannedNoti
       type: 'reactive',
       trigger: 'low_protein',
       title: 'EasyGains',
-      body: "You're behind on protein this week — maybe grab a shake?",
+      body: pickReactiveMessage('low_protein', tier),
       hour: 15,
       minute: 0,
     });
