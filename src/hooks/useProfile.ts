@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { Profile } from '../types/database';
+import { Profile, NotificationLevel, PersonalityTier } from '../types/database';
 
 export function useProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -20,7 +20,27 @@ export function useProfile() {
     setLoading(false);
   }, []);
 
+  async function updateNotificationLevel(level: NotificationLevel) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase
+      .from('profiles')
+      .update({ notification_level: level })
+      .eq('id', user.id);
+    await refetch();
+  }
+
+  async function updatePersonalityTier(tier: PersonalityTier) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase
+      .from('profiles')
+      .update({ personality_tier: tier })
+      .eq('id', user.id);
+    await refetch();
+  }
+
   useEffect(() => { refetch(); }, [refetch]);
 
-  return { profile, loading, refetch };
+  return { profile, loading, refetch, updateNotificationLevel, updatePersonalityTier };
 }
