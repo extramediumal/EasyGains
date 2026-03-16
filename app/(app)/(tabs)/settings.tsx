@@ -5,28 +5,25 @@ import {
   TextInput,
   StyleSheet,
   ScrollView,
-  Switch,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { supabase } from '../../../src/lib/supabase';
 import { useProfile } from '../../../src/hooks/useProfile';
-import { useNotificationSettings } from '../../../src/hooks/useNotificationSettings';
 import { computeMacroTargets } from '../../../src/lib/macroTargets';
 import { Button } from '../../../src/components/Button';
 import { Colors, Radii, Spacing } from '../../../src/lib/theme';
-
-const MEAL_DEFAULTS = [
-  { type: 'breakfast', label: 'Breakfast', defaultTime: '08:00' },
-  { type: 'lunch', label: 'Lunch', defaultTime: '12:30' },
-  { type: 'dinner', label: 'Dinner', defaultTime: '18:30' },
-  { type: 'snack', label: 'Snack', defaultTime: '15:00' },
-];
+import { NotificationSlider } from '../../../src/components/NotificationSlider';
+import { UnhingedGate } from '../../../src/components/UnhingedGate';
+import { useSubmissionCount } from '../../../src/hooks/useSubmissionCount';
+import { checkSubmissionCount } from '../../../src/lib/unhingedGating';
 
 export default function SettingsScreen() {
-  const { profile } = useProfile();
-  const { settings, updateSetting } = useNotificationSettings();
+  const { profile, updateNotificationLevel, updatePersonalityTier } = useProfile();
+  const { count: submissionCount } = useSubmissionCount();
+  const [gateVisible, setGateVisible] = useState(false);
+  const showUnhinged = checkSubmissionCount(submissionCount);
   const [weight, setWeight] = useState('');
   const [calories, setCalories] = useState('');
   const [activityTarget, setActivityTarget] = useState('4');
@@ -62,10 +59,6 @@ export default function SettingsScreen() {
   }
 
   const macroSplit = computeMacroTargets(parseFloat(weight) || 160, parseFloat(calories) || 2000);
-
-  function getSettingForMeal(mealType: string) {
-    return settings.find((s) => s.meal_type === mealType);
-  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -109,25 +102,46 @@ export default function SettingsScreen() {
           <Button title="Save" onPress={handleSaveProfile} variant="primary" />
         </View>
 
-        <Text style={styles.sectionTitle}>Reminders</Text>
+        <Text style={styles.sectionTitle}>Notifications</Text>
 
-        {MEAL_DEFAULTS.map((meal) => {
-          const setting = getSettingForMeal(meal.type);
-          const enabled = setting?.enabled ?? false;
+        <NotificationSlider
+          level={(profile?.notification_level ?? 3) as any}
+          onLevelChange={(level) => updateNotificationLevel(level)}
+        />
 
-          return (
-            <View key={meal.type} style={styles.notifRow}>
-              <Text style={styles.notifLabel}>{meal.label}</Text>
-              <Text style={styles.notifTime}>{setting?.prompt_time || meal.defaultTime}</Text>
-              <Switch
-                value={enabled}
-                onValueChange={(value) =>
-                  updateSetting(meal.type, setting?.prompt_time || meal.defaultTime, value)
-                }
+        {!showUnhinged && (
+          <Text style={styles.teaser}>More notification styles unlock as you use the app...</Text>
+        )}
+
+        {showUnhinged && (
+          <View style={styles.personalityRow}>
+            <Text style={styles.notifLabel}>
+              Mode: {profile?.personality_tier === 'unhinged' ? '🔥 Coach AL' : '💪 Helpful Trainer'}
+            </Text>
+            {profile?.personality_tier !== 'unhinged' ? (
+              <Button
+                title="Unlock"
+                variant="ghost"
+                onPress={() => setGateVisible(true)}
               />
-            </View>
-          );
-        })}
+            ) : (
+              <Button
+                title="Switch to Helpful"
+                variant="ghost"
+                onPress={() => updatePersonalityTier('helpful')}
+              />
+            )}
+          </View>
+        )}
+
+        <UnhingedGate
+          visible={gateVisible}
+          onClose={() => setGateVisible(false)}
+          onUnlocked={() => {
+            updatePersonalityTier('unhinged');
+            setGateVisible(false);
+          }}
+        />
 
         <View style={styles.logoutContainer}>
           <Button title="Log out" onPress={handleLogout} variant="destructive" />
@@ -146,15 +160,8 @@ const styles = StyleSheet.create({
   hint: { fontSize: 13, color: Colors.success, marginBottom: 8 },
   input: { borderWidth: 1, borderColor: Colors.inputBorder, borderRadius: Radii.input, padding: 12, fontSize: 16 },
   buttonContainer: { marginTop: 16 },
-  notifRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.chipBackground,
-  },
   notifLabel: { fontSize: 16, flex: 1 },
-  notifTime: { fontSize: 14, color: Colors.textMuted, marginRight: 12 },
+  teaser: { fontSize: 13, color: Colors.textMuted, fontStyle: 'italic', marginTop: 4, marginBottom: 16 },
+  personalityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
   logoutContainer: { marginTop: 40, marginBottom: 40 },
 });
