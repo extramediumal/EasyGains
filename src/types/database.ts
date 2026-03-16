@@ -2,12 +2,18 @@ export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 export type WorkoutType = 'strength' | 'cardio' | 'flexibility' | 'sports' | 'other';
 export type TriggerType = 'meal_prompt' | 'no_log_reminder' | 'encouragement' | 'weekly_summary';
 export type ToneType = 'funny' | 'motivational' | 'chill' | 'sarcastic';
+export type PersonalityTier = 'helpful' | 'unhinged';
+export type NotificationLevel = 1 | 2 | 3 | 4 | 5;
+export type TipCategory = 'protein' | 'nutrition' | 'supplements' | 'training' | 'recovery' | 'sleep' | 'mindset' | 'myth_busting' | 'hormones' | 'longevity' | 'mobility' | 'cardio' | 'hydration' | 'gut_health' | 'brain_health';
+export type TipSource = 'mind_pump' | 'rhonda_patrick' | 'andy_galpin' | 'huberman';
 
 export interface Profile {
   id: string;
   desired_weight_lbs: number;
   calorie_target: number;
   activity_target: number;
+  notification_level: NotificationLevel;
+  personality_tier: PersonalityTier;
   created_at: string;
   updated_at: string;
 }
@@ -75,5 +81,15 @@ export interface NotificationTemplate {
   message_title: string;
   message_body: string;
   meal_type: MealType | null;
+  personality_tier: PersonalityTier;
+  active: boolean;
+}
+
+export interface NotificationTip {
+  id: string;
+  category: TipCategory;
+  source: TipSource;
+  message_title: string;
+  message_body: string;
   active: boolean;
 }
