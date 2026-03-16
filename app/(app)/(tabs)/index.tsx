@@ -11,10 +11,12 @@ import { WorkoutCard } from '../../../src/components/WorkoutCard';
 import { useTodayMeals } from '../../../src/hooks/useTodayMeals';
 import { useTodayWorkouts } from '../../../src/hooks/useTodayWorkouts';
 import { useProfile } from '../../../src/hooks/useProfile';
+import { useNotificationCheck } from '../../../src/hooks/useNotificationCheck';
 import { Colors, Spacing } from '../../../src/lib/theme';
 
 export default function HomeScreen() {
   const { profile, refetch: refetchProfile } = useProfile();
+  useNotificationCheck(profile);
   const { meals, totals, loading: mealsLoading, refetch: refetchMeals } = useTodayMeals();
   const { workouts, totals: workoutTotals, loading: workoutsLoading, refetch: refetchWorkouts } = useTodayWorkouts();
 
