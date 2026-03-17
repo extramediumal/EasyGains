@@ -5,11 +5,16 @@ import { supabase } from '../../src/lib/supabase';
 import { computeMacroTargets } from '../../src/lib/macroTargets';
 import { Button } from '../../src/components/Button';
 import { Colors, Radii, Spacing } from '../../src/lib/theme';
+import { useGuideState } from '../../src/hooks/useGuideState';
+import { GuidePopup } from '../../src/components/GuidePopup';
+import { GUIDE_STEPS } from '../../src/lib/guideSteps';
 
 export default function OnboardingScreen() {
   const [weight, setWeight] = useState('');
   const [calories, setCalories] = useState('2000');
   const [activityTarget, setActivityTarget] = useState('4');
+  const { currentStep, isGuideComplete, advanceStep } = useGuideState();
+  const [showGuide, setShowGuide] = useState(false);
 
   async function handleSave() {
     const weightNum = parseFloat(weight);
@@ -35,7 +40,14 @@ export default function OnboardingScreen() {
       Alert.alert('Error', error.message);
       return;
     }
-    router.replace('/(app)/(tabs)');
+    setShowGuide(true);
+  }
+
+  async function handleGuideDismiss() {
+    await advanceStep();
+    if (currentStep >= 1) {
+      router.replace('/(app)/(tabs)');
+    }
   }
 
   const proteinTarget = weight ? `${Math.round(parseFloat(weight))}g protein/day` : '';
@@ -49,7 +61,7 @@ export default function OnboardingScreen() {
       <Text style={styles.subtitle}>We'll keep it simple. Just two numbers.</Text>
 
       <Text style={styles.label}>Desired weight (lbs)</Text>
-      <Text style={styles.hint}>Your protein target will be 1g per pound</Text>
+      <Text style={styles.hint}>Your goal weight. We use this to set your targets.</Text>
       <TextInput
         style={styles.input}
         placeholder="e.g. 180"
@@ -87,6 +99,15 @@ export default function OnboardingScreen() {
       <View style={styles.buttonContainer}>
         <Button title="Let's Go" onPress={handleSave} variant="primary" />
       </View>
+
+      {showGuide && !isGuideComplete && currentStep <= 1 && (
+        <GuidePopup
+          visible={true}
+          message={GUIDE_STEPS[currentStep]?.message || ''}
+          buttonText={GUIDE_STEPS[currentStep]?.buttonText || 'Next'}
+          onDismiss={handleGuideDismiss}
+        />
+      )}
     </View>
   );
 }

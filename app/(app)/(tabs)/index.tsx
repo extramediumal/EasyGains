@@ -13,12 +13,24 @@ import { useTodayWorkouts } from '../../../src/hooks/useTodayWorkouts';
 import { useProfile } from '../../../src/hooks/useProfile';
 import { useNotificationCheck } from '../../../src/hooks/useNotificationCheck';
 import { Colors, Spacing } from '../../../src/lib/theme';
+import { useGuideState } from '../../../src/hooks/useGuideState';
+import { GuidePopup } from '../../../src/components/GuidePopup';
+import { GUIDE_STEPS } from '../../../src/lib/guideSteps';
 
 export default function HomeScreen() {
   const { profile, refetch: refetchProfile } = useProfile();
   useNotificationCheck(profile);
   const { meals, totals, loading: mealsLoading, refetch: refetchMeals } = useTodayMeals();
   const { workouts, totals: workoutTotals, loading: workoutsLoading, refetch: refetchWorkouts } = useTodayWorkouts();
+  const { currentStep, isGuideComplete, advanceStep } = useGuideState();
+
+  async function handleGuideDismiss() {
+    await advanceStep();
+    // After step 4 (last popup "Take me there"), navigate to settings
+    if (currentStep >= 4) {
+      router.push('/(app)/(tabs)/settings');
+    }
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -79,6 +91,14 @@ export default function HomeScreen() {
 
         <View style={{ height: 80 }} />
       </ScrollView>
+      {!isGuideComplete && currentStep >= 2 && currentStep <= 4 && (
+        <GuidePopup
+          visible={true}
+          message={GUIDE_STEPS[currentStep]?.message || ''}
+          buttonText={GUIDE_STEPS[currentStep]?.buttonText || 'Next'}
+          onDismiss={handleGuideDismiss}
+        />
+      )}
     </SafeAreaView>
   );
 }
