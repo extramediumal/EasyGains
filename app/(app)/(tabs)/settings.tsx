@@ -74,9 +74,10 @@ export default function SettingsScreen() {
           onChangeText={setWeight}
           keyboardType="numeric"
         />
-        <Text style={styles.hint}>Protein target: {weight ? `${Math.round(parseFloat(weight))}g/day` : '—'}</Text>
+        <Text style={styles.hint}>Your goal weight. We use this to set your targets.</Text>
 
         <Text style={styles.label}>Daily calorie target</Text>
+        <Text style={styles.hint}>We'll calculate this from your goal weight, or enter your own.</Text>
         <TextInput
           style={styles.input}
           value={calories}
@@ -90,7 +91,7 @@ export default function SettingsScreen() {
         ) : null}
 
         <Text style={styles.label}>Daily effort target (1-10)</Text>
-        <Text style={styles.hint}>4 = avg across training + rest days. 6-7 = great workout days.</Text>
+        <Text style={styles.hint}>How hard you want to push this week, on a 1-10 scale. 4 = moderate, 7 = intense.</Text>
         <TextInput
           style={styles.input}
           value={activityTarget}
