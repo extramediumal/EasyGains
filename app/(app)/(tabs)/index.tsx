@@ -16,6 +16,9 @@ import { Colors, Spacing } from '../../../src/lib/theme';
 import { useGuideState } from '../../../src/hooks/useGuideState';
 import { GuidePopup } from '../../../src/components/GuidePopup';
 import { GUIDE_STEPS } from '../../../src/lib/guideSteps';
+import { useDailyEntryCount } from '../../../src/hooks/useDailyEntryCount';
+import { useSubscription } from '../../../src/providers/SubscriptionProvider';
+import { Button } from '../../../src/components/Button';
 
 export default function HomeScreen() {
   const { profile, refetch: refetchProfile } = useProfile();
@@ -23,6 +26,8 @@ export default function HomeScreen() {
   const { meals, totals, loading: mealsLoading, refetch: refetchMeals } = useTodayMeals();
   const { workouts, totals: workoutTotals, loading: workoutsLoading, refetch: refetchWorkouts } = useTodayWorkouts();
   const { currentStep, isGuideComplete, advanceStep } = useGuideState();
+  const { isPro } = useSubscription();
+  const { count: dailyCount, fetchCount } = useDailyEntryCount();
 
   async function handleGuideDismiss() {
     await advanceStep();
@@ -37,7 +42,8 @@ export default function HomeScreen() {
       refetchProfile();
       refetchMeals();
       refetchWorkouts();
-    }, [refetchProfile, refetchMeals, refetchWorkouts])
+      if (!isPro) fetchCount();
+    }, [refetchProfile, refetchMeals, refetchWorkouts, isPro, fetchCount])
   );
 
   const macroTargets = computeMacroTargets(
@@ -50,6 +56,19 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safe}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={styles.header}>Today</Text>
+
+        {!isPro && dailyCount !== null && dailyCount >= 3 && (
+          <View style={styles.limitBanner}>
+            <Text style={styles.limitText}>
+              You've used all 3 free entries today. Go Pro for unlimited.
+            </Text>
+            <Button
+              title="Go Pro"
+              onPress={() => router.push('/(app)/paywall?source=entry_limit')}
+              variant="secondary"
+            />
+          </View>
+        )}
 
         <View style={styles.ringsRow}>
           <View style={styles.ringCard}>
@@ -116,4 +135,6 @@ const styles = StyleSheet.create({
   ringCard: { flex: 1, backgroundColor: Colors.cardBackground, borderRadius: 16, padding: 12, alignItems: 'center', justifyContent: 'center', marginHorizontal: 4 },
   sectionHeader: { fontSize: 18, fontWeight: '600', marginTop: 8, marginBottom: 12 },
   empty: { textAlign: 'center', color: Colors.textMuted, marginTop: 24 },
+  limitBanner: { backgroundColor: Colors.cardBackground, borderRadius: 12, padding: 12, marginBottom: 12, alignItems: 'center', gap: 8 },
+  limitText: { fontSize: 13, color: Colors.textSecondary, textAlign: 'center' },
 });
