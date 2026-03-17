@@ -1,8 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases';
 import { useAuth } from './AuthProvider';
 
-const REVENUECAT_API_KEY = 'appl_WRdlqTAYukeBzuFYnoYUVDJWCPP';
+const REVENUECAT_IOS_KEY = 'appl_WRdlqTAYukeBzuFYnoYUVDJWCPP';
+const REVENUECAT_ANDROID_KEY = 'goog_YOUR_ANDROID_KEY_HERE'; // TODO: Replace with real Google Play key from RevenueCat
+const REVENUECAT_API_KEY = Platform.OS === 'ios' ? REVENUECAT_IOS_KEY : REVENUECAT_ANDROID_KEY;
 
 export const ENTITLEMENT_PRO = 'pro';
 

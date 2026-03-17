@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1C1C1E"
     },
     "ios": {
       "bundleIdentifier": "com.easygains.app",
@@ -22,6 +22,10 @@
       }
     },
     "android": {
+      "package": "com.easygains.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
