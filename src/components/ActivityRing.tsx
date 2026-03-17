@@ -18,8 +18,8 @@ function getMessage(percent: number): string {
 
 export function ActivityRing({ current, target }: ActivityRingProps) {
   const percent = Math.min((current / target) * 100, 100);
-  const size = 160;
-  const strokeWidth = 11;
+  const size = 110;
+  const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percent / 100) * circumference;

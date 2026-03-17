@@ -33,7 +33,6 @@ export function useNotificationCheck(profile: Profile | null) {
       const todayStart = new Date(now);
       todayStart.setHours(0, 0, 0, 0);
 
-      // Get today's logged meal types
       const { data: todayMeals } = await supabase
         .from('meals')
         .select('meal_type')
@@ -42,7 +41,6 @@ export function useNotificationCheck(profile: Profile | null) {
 
       const loggedTypes = (todayMeals || []).map((m: any) => m.meal_type);
 
-      // Get days since last workout
       const { data: lastWorkout } = await supabase
         .from('workouts')
         .select('logged_at')
@@ -58,7 +56,6 @@ export function useNotificationCheck(profile: Profile | null) {
         );
       }
 
-      // Get weekly protein percentage
       const weekStart = new Date(now);
       weekStart.setDate(weekStart.getDate() - 7);
       const { data: weekMeals } = await supabase
@@ -75,26 +72,23 @@ export function useNotificationCheck(profile: Profile | null) {
         ? Math.round((weeklyProtein / weeklyProteinTarget) * 100)
         : 100;
 
-      // Get random tips
       const { data: tips } = await supabase
         .from('notification_tips')
         .select('*')
         .eq('active', true)
         .limit(10);
 
-      // Check missed meals
       const missedMeals = shouldSendReactiveNudge(now, MEAL_WINDOWS, loggedTypes);
 
-      // Build plan
       const plan = buildNotificationPlan({
         level: profile!.notification_level as any,
+        personalityTier: profile!.personality_tier,
         missedMeals,
-        tips: tips || [],
+        tips: (tips || []) as NotificationTip[],
         daysSinceWorkout,
         weeklyProteinPct,
       });
 
-      // Cancel old and schedule new
       await cancelAllNotifications();
       for (const notification of plan) {
         await scheduleNotification({

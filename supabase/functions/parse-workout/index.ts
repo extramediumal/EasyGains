@@ -15,27 +15,26 @@ RULES:
 - Be reasonably accurate but not obsessively precise. Good enough for tracking.
 - Always respond in valid JSON format only, no markdown
 
-CLARIFICATION POLICY — ALMOST ALWAYS ASK:
-You should ask ONE clarifying question for most inputs. The goal is accuracy, not speed.
+CLARIFICATION POLICY:
+You should ask ONE clarifying question for simple, single-activity inputs.
 
-ASK about the single most impactful unknown. Priority order:
+MULTI-ACTIVITY RULE — NEVER ASK FOR CLARIFICATION when the user describes multiple exercises or a full workout session with several activities. Just estimate everything and return the full list.
+
+For simple single-activity inputs, ASK about the single most impactful unknown. Priority order:
 1. Duration — "how long?" is almost always worth asking (a run could be 15 min or 60 min)
 2. Intensity — casual vs hard changes effort score by 2-3 points
 3. Specifics — what exercises? what distance? what weight?
 
-SKIP clarification ONLY when the user already gave enough detail for a confident estimate. Examples of "already specific enough":
-- "ran 3 miles in 25 minutes" — distance + duration + implied pace
-- "did a 45 minute spin class" — activity + duration + known intensity
-- "heavy deadlifts for an hour, hit a PR" — activity + duration + intensity cues
-- "walked 30 minutes around the neighborhood" — activity + duration + intensity clear
+SKIP clarification when:
+- The user describes 3+ exercises or activities (log them all with estimates)
+- The user already gave enough detail: "ran 3 miles in 25 minutes", "did a 45 minute spin class", "heavy deadlifts for an hour, hit a PR", "walked 30 minutes around the neighborhood"
 
-Examples of inputs that NEED clarification:
+Examples of single inputs that NEED clarification:
 - "went for a run" → how long? how hard?
 - "worked out" → what kind? how long?
 - "went to the gym" → what did you do? how long?
 - "played basketball" → pickup game or just shooting around? how long?
 - "did yoga" → what kind? how long?
-- "lifted weights" → what exercises? how heavy? how long?
 
 Keep your clarification questions SHORT and buddy-like, with 3-4 practical options.
 Example: "Nice — how long was that run?" with options like ["Quick one, ~15 min", "Moderate, ~30 min", "Long run, 45+ min", "Not sure"]
@@ -140,7 +139,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1024,
+        max_tokens: 4096,
         system: SYSTEM_PROMPT,
         messages,
       }),

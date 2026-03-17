@@ -15,7 +15,7 @@ interface MacroTriforceProps {
   caloriesTarget: number;
 }
 
-const RING_SIZE = 96;
+const RING_SIZE = 68;
 
 const TINT_COLORS: Record<string, string> = {
   under: 'transparent',
@@ -47,7 +47,7 @@ export function MacroTriforce({
           color={Colors.protein}
           label="Protein"
           size={RING_SIZE}
-          strokeWidth={8}
+          strokeWidth={6}
         />
       </View>
       <View style={styles.bottomRow}>
@@ -57,7 +57,7 @@ export function MacroTriforce({
           color={Colors.carbs}
           label="Carbs"
           size={RING_SIZE}
-          strokeWidth={8}
+          strokeWidth={6}
         />
         <MiniRing
           current={fatCurrent}
@@ -65,7 +65,7 @@ export function MacroTriforce({
           color={Colors.fat}
           label="Fat"
           size={RING_SIZE}
-          strokeWidth={8}
+          strokeWidth={6}
         />
       </View>
       <Text style={styles.calorieText}>
@@ -77,7 +77,7 @@ export function MacroTriforce({
 
 const styles = StyleSheet.create({
   container: {
-    width: 210,
+    alignSelf: 'stretch',
     alignItems: 'center',
     borderRadius: 16,
     paddingVertical: 10,

@@ -52,17 +52,21 @@ export default function HomeScreen() {
         <Text style={styles.header}>Today</Text>
 
         <View style={styles.ringsRow}>
-          <MacroTriforce
-            proteinCurrent={totals.protein}
-            proteinTarget={macroTargets.protein}
-            carbsCurrent={totals.carbs}
-            carbsTarget={macroTargets.carbs}
-            fatCurrent={totals.fat}
-            fatTarget={macroTargets.fat}
-            caloriesCurrent={totals.calories}
-            caloriesTarget={macroTargets.calories}
-          />
-          <ActivityRing current={workoutTotals.effort_score} target={activityTarget} />
+          <View style={styles.ringCard}>
+            <MacroTriforce
+              proteinCurrent={totals.protein}
+              proteinTarget={macroTargets.protein}
+              carbsCurrent={totals.carbs}
+              carbsTarget={macroTargets.carbs}
+              fatCurrent={totals.fat}
+              fatTarget={macroTargets.fat}
+              caloriesCurrent={totals.calories}
+              caloriesTarget={macroTargets.calories}
+            />
+          </View>
+          <View style={styles.ringCard}>
+            <ActivityRing current={workoutTotals.effort_score} target={activityTarget} />
+          </View>
         </View>
 
         <Text style={styles.sectionHeader}>Meals</Text>
@@ -108,7 +112,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: Spacing.screenPadding, paddingTop: 16 },
   header: { fontSize: 28, fontWeight: 'bold', marginBottom: 16 },
-  ringsRow: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', marginBottom: 8 },
+  ringsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'stretch', marginBottom: 8, marginHorizontal: -Spacing.screenPadding, paddingHorizontal: 8 },
+  ringCard: { flex: 1, backgroundColor: Colors.cardBackground, borderRadius: 16, padding: 12, alignItems: 'center', justifyContent: 'center', marginHorizontal: 4 },
   sectionHeader: { fontSize: 18, fontWeight: '600', marginTop: 8, marginBottom: 12 },
   empty: { textAlign: 'center', color: Colors.textMuted, marginTop: 24 },
 });

@@ -1,3 +1,15 @@
+export type GoalType = 'lose' | 'maintain' | 'build';
+
+const CALORIE_MULTIPLIERS: Record<GoalType, number> = {
+  lose: 12,
+  maintain: 15,
+  build: 18,
+};
+
+export function computeCalorieTarget(desiredWeightLbs: number, goal: GoalType): number {
+  return Math.round(desiredWeightLbs * CALORIE_MULTIPLIERS[goal]);
+}
+
 export interface MacroTargets {
   protein: number;
   fat: number;

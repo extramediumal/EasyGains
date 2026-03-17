@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Slot } from 'expo-router';
 import { AuthProvider } from '../src/providers/AuthProvider';
+import { SubscriptionProvider } from '../src/providers/SubscriptionProvider';
 import { setupNotifications } from '../src/lib/notifications';
 
 export default function RootLayout() {
@@ -10,7 +11,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <Slot />
+      <SubscriptionProvider>
+        <Slot />
+      </SubscriptionProvider>
     </AuthProvider>
   );
 }

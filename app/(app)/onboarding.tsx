@@ -1,20 +1,43 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import { computeMacroTargets } from '../../src/lib/macroTargets';
+import { computeMacroTargets, computeCalorieTarget, GoalType } from '../../src/lib/macroTargets';
 import { Button } from '../../src/components/Button';
 import { Colors, Radii, Spacing } from '../../src/lib/theme';
 import { useGuideState } from '../../src/hooks/useGuideState';
 import { GuidePopup } from '../../src/components/GuidePopup';
 import { GUIDE_STEPS } from '../../src/lib/guideSteps';
 
+const GOALS: { value: GoalType; label: string }[] = [
+  { value: 'lose', label: 'Lose Weight' },
+  { value: 'maintain', label: 'Maintain' },
+  { value: 'build', label: 'Build Muscle' },
+];
+
 export default function OnboardingScreen() {
   const [weight, setWeight] = useState('');
+  const [goal, setGoal] = useState<GoalType>('maintain');
   const [calories, setCalories] = useState('2000');
   const [activityTarget, setActivityTarget] = useState('4');
   const { currentStep, isGuideComplete, advanceStep } = useGuideState();
   const [showGuide, setShowGuide] = useState(false);
+
+  function handleGoalSelect(selected: GoalType) {
+    setGoal(selected);
+    const weightNum = parseFloat(weight);
+    if (weightNum > 0) {
+      setCalories(String(computeCalorieTarget(weightNum, selected)));
+    }
+  }
+
+  function handleWeightChange(val: string) {
+    setWeight(val);
+    const weightNum = parseFloat(val);
+    if (weightNum > 0) {
+      setCalories(String(computeCalorieTarget(weightNum, goal)));
+    }
+  }
 
   async function handleSave() {
     const weightNum = parseFloat(weight);
@@ -32,6 +55,7 @@ export default function OnboardingScreen() {
       .update({
         desired_weight_lbs: weightNum,
         calorie_target: calorieNum,
+        goal,
         activity_target: Math.min(10, Math.max(1, parseFloat(activityTarget) || 4)),
       })
       .eq('id', user.id);
@@ -58,7 +82,7 @@ export default function OnboardingScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Let's set your targets</Text>
-      <Text style={styles.subtitle}>We'll keep it simple. Just two numbers.</Text>
+      <Text style={styles.subtitle}>We'll keep it simple.</Text>
 
       <Text style={styles.label}>Desired weight (lbs)</Text>
       <Text style={styles.hint}>Your goal weight. We use this to set your targets.</Text>
@@ -66,16 +90,30 @@ export default function OnboardingScreen() {
         style={styles.input}
         placeholder="e.g. 180"
         value={weight}
-        onChangeText={setWeight}
+        onChangeText={handleWeightChange}
         keyboardType="numeric"
       />
       {proteinTarget ? <Text style={styles.proteinHint}>{proteinTarget}</Text> : null}
 
+      <Text style={styles.label}>Goal</Text>
+      <View style={styles.chipRow}>
+        {GOALS.map((g) => (
+          <TouchableOpacity
+            key={g.value}
+            style={[styles.chip, goal === g.value && styles.chipSelected]}
+            onPress={() => handleGoalSelect(g.value)}
+          >
+            <Text style={[styles.chipText, goal === g.value && styles.chipTextSelected]}>
+              {g.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <Text style={styles.label}>Daily calorie target</Text>
-      <Text style={styles.hint}>We'll calculate this from your goal weight, or enter your own.</Text>
+      <Text style={styles.hint}>Auto-calculated from your goal. Edit if needed.</Text>
       <TextInput
         style={styles.input}
-        placeholder="e.g. 2000"
         value={calories}
         onChangeText={setCalories}
         keyboardType="numeric"
@@ -120,5 +158,10 @@ const styles = StyleSheet.create({
   hint: { fontSize: 13, color: Colors.textMuted, marginBottom: 8 },
   input: { borderWidth: 1, borderColor: Colors.inputBorder, borderRadius: Radii.input, padding: 14, fontSize: 18, marginBottom: 4 },
   proteinHint: { fontSize: 14, color: Colors.success, fontWeight: '600', marginBottom: 8 },
+  chipRow: { flexDirection: 'row', gap: 8, marginTop: 4, marginBottom: 8 },
+  chip: { flex: 1, paddingVertical: 10, borderRadius: Radii.input, borderWidth: 1, borderColor: Colors.inputBorder, alignItems: 'center' },
+  chipSelected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  chipText: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
+  chipTextSelected: { color: '#fff' },
   buttonContainer: { marginTop: 24 },
 });

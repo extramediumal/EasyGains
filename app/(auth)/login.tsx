@@ -17,6 +17,18 @@ export default function LoginScreen() {
     if (error) Alert.alert('Error', error.message);
   }
 
+  async function handleForgotPassword() {
+    if (!email) {
+      Alert.alert('Enter your email', 'Type your email above, then tap Forgot Password.');
+      return;
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'easygains://reset-password',
+    });
+    if (error) Alert.alert('Error', error.message);
+    else Alert.alert('Check your email', `We sent a password reset link to ${email}.`);
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>EasyGains</Text>
@@ -47,6 +59,11 @@ export default function LoginScreen() {
         />
       </View>
 
+      <Button
+        title="Forgot password?"
+        onPress={handleForgotPassword}
+        variant="ghost"
+      />
       <Button
         title="Don't have an account? Sign up"
         onPress={() => router.push('/(auth)/signup')}

@@ -2,72 +2,73 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
+import { useAuth } from '../../src/providers/AuthProvider';
 import { Button } from '../../src/components/Button';
 import { Colors, Radii, Spacing } from '../../src/lib/theme';
 
-export default function SignupScreen() {
-  const [email, setEmail] = useState('');
+export default function ResetPasswordScreen() {
+  const { clearPasswordRecovery } = useAuth();
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function handleSignup() {
+  async function handleReset() {
     if (password.length < 8) {
       Alert.alert('Too short', 'Password must be at least 8 characters.');
       return;
     }
+    if (password !== confirm) {
+      Alert.alert('Mismatch', 'Passwords do not match.');
+      return;
+    }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
     if (error) {
       Alert.alert('Error', error.message);
     } else {
-      Alert.alert('Check your email', `We sent a confirmation link to ${email}. Tap it to activate your account.`);
+      clearPasswordRecovery();
+      router.replace('/(app)');
     }
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create account</Text>
-      <Text style={styles.subtitle}>Free to get started.</Text>
+      <Text style={styles.title}>Set new password</Text>
+      <Text style={styles.subtitle}>Choose something you'll remember.</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
+        placeholder="New password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        autoFocus
       />
       <TextInput
         style={styles.input}
-        placeholder="Password (8+ characters)"
-        value={password}
-        onChangeText={setPassword}
+        placeholder="Confirm password"
+        value={confirm}
+        onChangeText={setConfirm}
         secureTextEntry
       />
 
       <View style={styles.buttonContainer}>
         <Button
-          title={loading ? 'Creating account...' : 'Sign Up'}
-          onPress={handleSignup}
+          title={loading ? 'Saving...' : 'Set Password'}
+          onPress={handleReset}
           disabled={loading}
           variant="primary"
         />
       </View>
-
-      <Button
-        title="Already have an account? Log in"
-        onPress={() => router.back()}
-        variant="ghost"
-      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: Spacing.screenPadding, backgroundColor: Colors.background },
-  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 4 },
-  subtitle: { fontSize: 16, color: Colors.textSecondary, textAlign: 'center', marginBottom: 32 },
+  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 4 },
+  subtitle: { fontSize: 16, color: Colors.textSecondary, marginBottom: 32 },
   input: { borderWidth: 1, borderColor: Colors.inputBorder, borderRadius: Radii.input, padding: 14, fontSize: 16, marginBottom: 12 },
   buttonContainer: { marginTop: 8 },
 });

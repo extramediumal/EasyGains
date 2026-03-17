@@ -13,6 +13,8 @@ import { ParsedWorkoutList } from '../../src/components/ParsedWorkoutList';
 import { Button } from '../../src/components/Button';
 import { WorkoutType } from '../../src/types/database';
 import { Colors, Radii } from '../../src/lib/theme';
+import { useSubscription } from '../../src/providers/SubscriptionProvider';
+import { useDailyEntryCount } from '../../src/hooks/useDailyEntryCount';
 
 function MicIcon() {
   return (
@@ -62,6 +64,11 @@ const WORKOUT_KEYWORDS = [
   'basketball', 'soccer', 'tennis', 'volleyball', 'boxing', 'kickboxing',
   'sprinted', 'sprint', 'laps',
   'reps', 'sets', 'dumbbell', 'barbell', 'kettlebell',
+  'gym', 'weights', 'weight training', 'weight lifting', 'weightlifting',
+  'miles', 'mile', 'steps', 'class', 'spin', 'pilates', 'zumba',
+  'abs', 'core', 'arms', 'legs', 'chest', 'back day', 'leg day',
+  'treadmill', 'elliptical', 'rowing', 'row',
+  'circuit', 'interval', 'zone 2',
 ];
 
 const FOOD_KEYWORDS = [
@@ -102,7 +109,11 @@ type ParseState =
   | { status: 'parsed_both'; foods: FoodItem[]; workout_type: WorkoutType; exercises: ExerciseItem[] }
   | { status: 'error'; message: string };
 
+const FREE_DAILY_LIMIT = 3;
+
 export default function VoiceInputScreen() {
+  const { isPro } = useSubscription();
+  const { fetchCount } = useDailyEntryCount();
   const [transcript, setTranscript] = useState('');
   const transcriptRef = useRef('');
   const confirmedRef = useRef('');
@@ -169,13 +180,25 @@ export default function VoiceInputScreen() {
 
   async function handleParse(text: string) {
     setState({ status: 'processing' });
+
+    if (!isPro) {
+      const todayCount = await fetchCount();
+      if (todayCount !== null && todayCount >= FREE_DAILY_LIMIT) {
+        router.push('/(app)/paywall');
+        setState({ status: 'idle' });
+        return;
+      }
+    }
+
     const inputType = detectInputType(text);
 
     try {
       if (inputType === 'both') {
+        const { data: { session } } = await supabase.auth.getSession();
+        const authHeaders = session ? { Authorization: `Bearer ${session.access_token}` } : {};
         const [foodResult, workoutResult] = await Promise.all([
-          supabase.functions.invoke('parse-food', { body: { text } }),
-          supabase.functions.invoke('parse-workout', { body: { text } }),
+          supabase.functions.invoke('parse-food', { body: { text }, headers: authHeaders }),
+          supabase.functions.invoke('parse-workout', { body: { text }, headers: authHeaders }),
         ]);
 
         const foodOk = !foodResult.error && foodResult.data?.type === 'meal';
@@ -236,13 +259,21 @@ export default function VoiceInputScreen() {
     const currentContext = ctx || foodContext;
     setState({ status: 'processing' });
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke('parse-food', {
         body: { text, context: currentContext.length > 0 ? currentContext : undefined },
+        headers: session ? { Authorization: `Bearer ${session.access_token}` } : {},
       });
 
       if (error) throw error;
 
       if (data.type === 'clarification') {
+        // If Claude thinks this is a workout, silently re-route instead of showing a confusing clarification
+        const q = (data.question || '').toLowerCase();
+        const looksLikeWorkoutMismatch = ['workout', 'exercise', 'run', 'lift', 'training', 'activity'].some(w => q.includes(w));
+        if (looksLikeWorkoutMismatch) {
+          return parseWorkout(text);
+        }
         setFoodContext([...currentContext, { role: 'user', content: text }]);
         setState({
           status: 'clarifying',
@@ -281,8 +312,10 @@ export default function VoiceInputScreen() {
     const currentContext = ctx || workoutContext;
     setState({ status: 'processing' });
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke('parse-workout', {
         body: { text, context: currentContext.length > 0 ? currentContext : undefined },
+        headers: session ? { Authorization: `Bearer ${session.access_token}` } : {},
       });
 
       if (error) throw error;
@@ -487,6 +520,7 @@ export default function VoiceInputScreen() {
             />
           )}
 
+
           <View style={styles.clarifyMicSection}>
             <Text style={styles.clarifyOrText}>
               {state.options.length > 0 ? 'or speak your answer' : 'Tap to answer'}
@@ -564,11 +598,11 @@ const styles = StyleSheet.create({
   hint: { marginTop: 16, color: Colors.textMuted },
   transcript: { fontSize: 16, color: '#333', padding: 24, textAlign: 'center' },
   processingText: { marginTop: 16, color: Colors.textSecondary },
-  resultContainer: { flex: 1 },
+  resultContainer: { flex: 1, paddingTop: 60 },
   sectionTitle: { fontSize: 18, fontWeight: '600', paddingHorizontal: 24, marginTop: 8 },
   confirmContainer: { margin: 24 },
   error: { color: Colors.destructive, fontSize: 16, marginBottom: 24 },
-  clarifyContainer: { alignItems: 'center', padding: 24, paddingTop: 40 },
+  clarifyContainer: { alignItems: 'center', padding: 24, paddingTop: 80 },
   clarifyQuestion: { fontSize: 20, fontWeight: '600', textAlign: 'center', marginBottom: 24 },
   clarifyMicSection: { alignItems: 'center', marginTop: 32 },
   clarifyOrText: { textAlign: 'center', color: Colors.textMuted, fontSize: 14, marginBottom: 16 },

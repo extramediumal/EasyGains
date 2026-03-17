@@ -1,3 +1,4 @@
+export type GoalType = 'lose' | 'maintain' | 'build';
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 export type WorkoutType = 'strength' | 'cardio' | 'flexibility' | 'sports' | 'other';
 export type TriggerType = 'meal_prompt' | 'no_log_reminder' | 'encouragement' | 'weekly_summary';
@@ -12,6 +13,7 @@ export interface Profile {
   desired_weight_lbs: number;
   calorie_target: number;
   activity_target: number;
+  goal: GoalType;
   notification_level: NotificationLevel;
   personality_tier: PersonalityTier;
   created_at: string;

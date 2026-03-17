@@ -1,4 +1,3 @@
-// src/hooks/useNotificationSettings.ts
 import { useCallback } from 'react';
 import { cancelAllNotifications } from '../lib/notifications';
 
