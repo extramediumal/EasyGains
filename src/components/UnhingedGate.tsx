@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   Modal,
 } from 'react-native';
@@ -11,7 +10,6 @@ import { Colors, Radii, Spacing } from '../lib/theme';
 import {
   PROTECTOR_QUESTIONS,
   validateProtectorAnswers,
-  validatePassphrase,
   getRandomDenialMessage,
 } from '../lib/unhingedGating';
 
@@ -21,20 +19,18 @@ interface UnhingedGateProps {
   onUnlocked: () => void;
 }
 
-type Stage = 'protector' | 'passphrase' | 'denied' | 'unlocked';
+type Stage = 'protector' | 'denied' | 'unlocked';
 
 export function UnhingedGate({ visible, onClose, onUnlocked }: UnhingedGateProps) {
   const [stage, setStage] = useState<Stage>('protector');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
-  const [passphrase, setPassphrase] = useState('');
   const [denialMessage, setDenialMessage] = useState('');
 
   function reset() {
     setStage('protector');
     setQuestionIndex(0);
     setAnswers([]);
-    setPassphrase('');
     setDenialMessage('');
   }
 
@@ -46,21 +42,12 @@ export function UnhingedGate({ visible, onClose, onUnlocked }: UnhingedGateProps
       setQuestionIndex(questionIndex + 1);
     } else {
       if (validateProtectorAnswers(newAnswers)) {
-        setStage('passphrase');
+        setStage('unlocked');
+        onUnlocked();
       } else {
         setDenialMessage(getRandomDenialMessage());
         setStage('denied');
       }
-    }
-  }
-
-  function handlePassphrase() {
-    if (validatePassphrase(passphrase)) {
-      setStage('unlocked');
-      onUnlocked();
-    } else {
-      setDenialMessage(getRandomDenialMessage());
-      setStage('denied');
     }
   }
 
@@ -88,22 +75,6 @@ export function UnhingedGate({ visible, onClose, onUnlocked }: UnhingedGateProps
                   />
                 </View>
               ))}
-            </>
-          )}
-
-          {stage === 'passphrase' && (
-            <>
-              <Text style={styles.title}>🔐 Final Step</Text>
-              <Text style={styles.question}>Enter the passphrase.</Text>
-              <TextInput
-                style={styles.input}
-                value={passphrase}
-                onChangeText={setPassphrase}
-                placeholder="Type it here..."
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <Button title="Submit" onPress={handlePassphrase} />
             </>
           )}
 
@@ -157,14 +128,6 @@ const styles = StyleSheet.create({
   },
   optionContainer: {
     marginBottom: 12,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: Colors.inputBorder,
-    borderRadius: Radii.input,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 16,
   },
   denial: {
     fontSize: 18,

@@ -3,7 +3,6 @@ import {
   UNHINGED_THRESHOLD,
   PROTECTOR_QUESTIONS,
   validateProtectorAnswers,
-  validatePassphrase,
   DENIAL_MESSAGES,
 } from '../../src/lib/unhingedGating';
 
@@ -28,16 +27,6 @@ describe('validateProtectorAnswers', () => {
     const answers = PROTECTOR_QUESTIONS.map((q) => q.correctAnswer);
     answers[0] = 'wrong';
     expect(validateProtectorAnswers(answers)).toBe(false);
-  });
-});
-
-describe('validatePassphrase', () => {
-  it('returns true for correct passphrase (case insensitive)', () => {
-    expect(validatePassphrase('GAINS OVER FEELINGS')).toBe(true);
-    expect(validatePassphrase('gains over feelings')).toBe(true);
-  });
-  it('returns false for wrong passphrase', () => {
-    expect(validatePassphrase('hello world')).toBe(false);
   });
 });
 

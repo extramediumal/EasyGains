@@ -1,5 +1,5 @@
 import { getMaxNotifications, buildNotificationPlan } from '../../src/lib/notificationEngine';
-import { checkSubmissionCount, validateProtectorAnswers, validatePassphrase, PROTECTOR_QUESTIONS } from '../../src/lib/unhingedGating';
+import { checkSubmissionCount, validateProtectorAnswers, PROTECTOR_QUESTIONS } from '../../src/lib/unhingedGating';
 
 describe('Notification System Integration', () => {
   describe('Ghost mode (level 1)', () => {
@@ -66,18 +66,13 @@ describe('Notification System Integration', () => {
       expect(checkSubmissionCount(100)).toBe(true);
     });
 
-    it('requires correct protector answers + passphrase', () => {
+    it('requires correct protector answers', () => {
       const correctAnswers = PROTECTOR_QUESTIONS.map(q => q.correctAnswer);
       expect(validateProtectorAnswers(correctAnswers)).toBe(true);
-      expect(validatePassphrase('gains over feelings')).toBe(true);
     });
 
     it('rejects wrong protector answers', () => {
       expect(validateProtectorAnswers(['wrong', 'wrong', 'wrong'])).toBe(false);
-    });
-
-    it('rejects wrong passphrase', () => {
-      expect(validatePassphrase('let me in')).toBe(false);
     });
   });
 
