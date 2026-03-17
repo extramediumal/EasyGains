@@ -32,7 +32,7 @@ export default function SettingsScreen() {
   const { isPro } = useSubscription();
   const { count: submissionCount } = useSubmissionCount();
   const [gateVisible, setGateVisible] = useState(false);
-  const showUnhinged = checkSubmissionCount(submissionCount);
+  const showUnhinged = isPro && checkSubmissionCount(submissionCount);
   const [weight, setWeight] = useState('');
   const [goal, setGoal] = useState<GoalType>('maintain');
   const [calories, setCalories] = useState('');
@@ -149,7 +149,7 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>Plan</Text>
         <Text style={styles.hint}>{isPro ? 'Pro — unlimited entries' : 'Free — 3 entries/day'}</Text>
         {!isPro && (
-          <Button title="Upgrade to Pro" onPress={() => router.push('/(app)/paywall')} variant="primary" />
+          <Button title="Upgrade to Pro" onPress={() => router.push('/(app)/paywall?source=settings')} variant="primary" />
         )}
 
         <Text style={styles.sectionTitle}>Notifications</Text>
@@ -159,7 +159,7 @@ export default function SettingsScreen() {
           onLevelChange={(level) => updateNotificationLevel(level)}
         />
 
-        {!showUnhinged && (
+        {isPro && !showUnhinged && (
           <Text style={styles.teaser}>More notification styles unlock as you use the app...</Text>
         )}
 
