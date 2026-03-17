@@ -184,7 +184,7 @@ export default function VoiceInputScreen() {
     if (!isPro) {
       const todayCount = await fetchCount();
       if (todayCount !== null && todayCount >= FREE_DAILY_LIMIT) {
-        router.push('/(app)/paywall');
+        router.push('/(app)/paywall?source=entry_limit');
         setState({ status: 'idle' });
         return;
       }

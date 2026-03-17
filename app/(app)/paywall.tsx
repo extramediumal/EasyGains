@@ -1,13 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import Purchases, { PurchasesPackage } from 'react-native-purchases';
 import { useSubscription } from '../../src/providers/SubscriptionProvider';
 import { Button } from '../../src/components/Button';
 import { Colors, Spacing } from '../../src/lib/theme';
 
 export default function PaywallScreen() {
+  const { source } = useLocalSearchParams<{ source?: string }>();
   const { restorePurchases } = useSubscription();
+
+  const SUBTITLES: Record<string, string> = {
+    entry_limit: "You've used all 3 free entries today.",
+    notifications: "Unlock custom reminders and coaching tips.",
+    settings: "Unlimited entries, smarter tracking, and more.",
+  };
+  const subtitle = SUBTITLES[source || ''] || "Go Pro and get the most out of EasyGains.";
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
@@ -55,7 +63,7 @@ export default function PaywallScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Go Pro</Text>
-      <Text style={styles.subtitle}>You've hit the free limit of 3 entries today.</Text>
+      <Text style={styles.subtitle}>{subtitle}</Text>
 
       <View style={styles.features}>
         <Text style={styles.feature}>✓ Unlimited voice entries</Text>
