@@ -1,7 +1,5 @@
 export const UNHINGED_THRESHOLD = 100;
 
-export const PASSPHRASE = 'gains over feelings';
-
 export interface ProtectorQuestion {
   question: string;
   options: string[];
@@ -27,10 +25,10 @@ export const PROTECTOR_QUESTIONS: ProtectorQuestion[] = [
 ];
 
 export const DENIAL_MESSAGES = [
-  'You are not ready, young grasshopper.',
-  'You must prove yourself.',
-  "Come back when you've toughened up.",
-  'The unhinged path is not for the faint of heart.',
+  'Come back after you repress all your feelings.',
+  "You look like I'll offend you. Try again.",
+  'Full of happy thoughts? No thanks.',
+  "Good vibes are stupid. You're not stupid... are you?",
   'Maybe try a meditation app instead.',
 ];
 
@@ -41,10 +39,6 @@ export function checkSubmissionCount(count: number): boolean {
 export function validateProtectorAnswers(answers: string[]): boolean {
   if (answers.length !== PROTECTOR_QUESTIONS.length) return false;
   return PROTECTOR_QUESTIONS.every((q, i) => answers[i] === q.correctAnswer);
-}
-
-export function validatePassphrase(input: string): boolean {
-  return input.toLowerCase().trim() === PASSPHRASE;
 }
 
 export function getRandomDenialMessage(): string {
