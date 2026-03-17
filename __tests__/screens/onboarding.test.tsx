@@ -19,6 +19,11 @@ jest.mock('expo-router', () => ({
   router: { replace: jest.fn() },
 }));
 
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn().mockResolvedValue(null),
+  setItem: jest.fn().mockResolvedValue(undefined),
+}));
+
 describe('OnboardingScreen', () => {
   it('renders weight and calorie inputs', () => {
     render(<OnboardingScreen />);
