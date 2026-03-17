@@ -155,9 +155,16 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>Notifications</Text>
 
         <NotificationSlider
-          level={(profile?.notification_level ?? 3) as any}
+          level={isPro ? ((profile?.notification_level ?? 3) as any) : 2}
           onLevelChange={(level) => updateNotificationLevel(level)}
+          disabled={!isPro}
         />
+
+        {!isPro && (
+          <TouchableOpacity onPress={() => router.push('/(app)/paywall?source=notifications')}>
+            <Text style={styles.lockedHint}>🔒 Pro — unlock custom notification levels</Text>
+          </TouchableOpacity>
+        )}
 
         {isPro && !showUnhinged && (
           <Text style={styles.teaser}>More notification styles unlock as you use the app...</Text>
@@ -218,5 +225,6 @@ const styles = StyleSheet.create({
   notifLabel: { fontSize: 16, flex: 1 },
   teaser: { fontSize: 13, color: Colors.textMuted, fontStyle: 'italic', marginTop: 4, marginBottom: 16 },
   personalityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
+  lockedHint: { fontSize: 13, color: Colors.textMuted, marginTop: 4, marginBottom: 8 },
   logoutContainer: { marginTop: 40, marginBottom: 40 },
 });

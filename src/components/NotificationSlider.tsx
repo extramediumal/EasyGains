@@ -6,11 +6,12 @@ import { NotificationLevel } from '../types/database';
 interface NotificationSliderProps {
   level: NotificationLevel;
   onLevelChange: (level: NotificationLevel) => void;
+  disabled?: boolean;
 }
 
 const LEVELS: NotificationLevel[] = [1, 2, 3, 4, 5];
 
-export function NotificationSlider({ level, onLevelChange }: NotificationSliderProps) {
+export function NotificationSlider({ level, onLevelChange, disabled = false }: NotificationSliderProps) {
   return (
     <View testID="notification-slider" style={styles.container}>
       <Text style={styles.endpoint}>🔕</Text>
@@ -22,8 +23,10 @@ export function NotificationSlider({ level, onLevelChange }: NotificationSliderP
             style={[
               styles.dot,
               l <= level ? styles.dotActive : styles.dotInactive,
+              disabled && styles.dotDisabled,
             ]}
             onPress={() => onLevelChange(l)}
+            disabled={disabled}
           />
         ))}
       </View>
@@ -61,5 +64,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.chipBackground,
     borderWidth: 1,
     borderColor: Colors.inputBorder,
+  },
+  dotDisabled: {
+    opacity: 0.4,
   },
 });
