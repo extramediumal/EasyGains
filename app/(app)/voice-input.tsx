@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -119,6 +119,7 @@ export default function VoiceInputScreen() {
   const confirmedRef = useRef('');
   const parsingRef = useRef(false);
   const [state, setState] = useState<ParseState>({ status: 'idle' });
+  const [isAtLimit, setIsAtLimit] = useState(false);
   const [foodContext, setFoodContext] = useState<Array<{ role: string; content: string }>>([]);
   const [workoutContext, setWorkoutContext] = useState<Array<{ role: string; content: string }>>([]);
   const [clarifyListening, setClarifyListening] = useState(false);
@@ -128,6 +129,17 @@ export default function VoiceInputScreen() {
     workout?: { workout_type: WorkoutType; exercises: ExerciseItem[] };
     pendingWorkoutClarification?: { question: string; options: string[] };
   } | null>(null);
+
+  useEffect(() => {
+    const showResults = state.status === 'parsed_food' || state.status === 'parsed_workout' || state.status === 'parsed_both';
+    if (showResults && !isPro) {
+      fetchCount().then((todayCount) => {
+        if (todayCount !== null && todayCount >= FREE_DAILY_LIMIT) {
+          setIsAtLimit(true);
+        }
+      });
+    }
+  }, [state.status]);
 
   useSpeechRecognitionEvent('result', (event) => {
     const current = event.results[0]?.transcript || '';
@@ -158,6 +170,7 @@ export default function VoiceInputScreen() {
     if (!result.granted) return;
 
     setState({ status: 'listening' });
+    setIsAtLimit(false);
     setTranscript('');
     transcriptRef.current = '';
     confirmedRef.current = '';
@@ -180,15 +193,6 @@ export default function VoiceInputScreen() {
 
   async function handleParse(text: string) {
     setState({ status: 'processing' });
-
-    if (!isPro) {
-      const todayCount = await fetchCount();
-      if (todayCount !== null && todayCount >= FREE_DAILY_LIMIT) {
-        router.push('/(app)/paywall?source=entry_limit');
-        setState({ status: 'idle' });
-        return;
-      }
-    }
 
     const inputType = detectInputType(text);
 
@@ -564,7 +568,21 @@ export default function VoiceInputScreen() {
           )}
 
           <View style={styles.confirmContainer}>
-            <Button title="Log it" onPress={handleConfirm} variant="primary" />
+            {isAtLimit ? (
+              <View style={{ marginTop: 16, alignItems: 'center', gap: 12 }}>
+                <Text style={{ fontSize: 14, color: Colors.textMuted, textAlign: 'center' }}>
+                  You've used all 3 free entries today.
+                </Text>
+                <Button
+                  title="Go Pro to save this"
+                  onPress={() => router.push('/(app)/paywall?source=entry_limit')}
+                  variant="primary"
+                />
+                <Button title="Dismiss" onPress={() => router.back()} variant="ghost" />
+              </View>
+            ) : (
+              <Button title="Log it" onPress={handleConfirm} variant="primary" />
+            )}
           </View>
         </ScrollView>
       )}
