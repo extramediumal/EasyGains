@@ -1,4 +1,4 @@
-export const UNHINGED_THRESHOLD = 100;
+export const UNHINGED_THRESHOLD = 50;
 
 export interface ProtectorQuestion {
   question: string;

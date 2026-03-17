@@ -8,10 +8,10 @@ import {
 
 describe('checkSubmissionCount', () => {
   it('returns false below threshold', () => {
-    expect(checkSubmissionCount(99)).toBe(false);
+    expect(checkSubmissionCount(UNHINGED_THRESHOLD - 1)).toBe(false);
   });
   it('returns true at threshold', () => {
-    expect(checkSubmissionCount(100)).toBe(true);
+    expect(checkSubmissionCount(UNHINGED_THRESHOLD)).toBe(true);
   });
   it('returns true above threshold', () => {
     expect(checkSubmissionCount(250)).toBe(true);
