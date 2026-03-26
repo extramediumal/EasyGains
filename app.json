@@ -42,6 +42,12 @@
       "expo-router",
       "expo-secure-store",
       "expo-speech-recognition"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "38d9e5d9-a587-449a-bdb0-2af62e1dae8e"
+      }
+    }
   }
 }
